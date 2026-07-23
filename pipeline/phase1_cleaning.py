@@ -21,11 +21,13 @@ Installation prealable :
 
 import re
 import sys
+from pathlib import Path
 
 import pandas as pd
 
-INPUT_CSV = "SRC_Intercom_Reclamation_202607201846.csv"
-OUTPUT_CSV = "reclamations_phase1.csv"
+ROOT = Path(__file__).resolve().parent.parent
+INPUT_CSV = ROOT / "data" / "raw" / "SRC_Intercom_Reclamation_202607201846.csv"
+OUTPUT_CSV = ROOT / "data" / "processed" / "reclamations_phase1.csv"
 
 COLUMNS_TO_KEEP = [
     "ticket_id",

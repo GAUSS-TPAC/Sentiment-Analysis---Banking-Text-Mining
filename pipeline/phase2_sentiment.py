@@ -19,11 +19,13 @@ sentiment_score (confiance de la classe predite), sentiment_scores_detail
 """
 
 import sys
+from pathlib import Path
 
 import pandas as pd
 
-INPUT_CSV = "reclamations_phase1.csv"
-OUTPUT_CSV = "reclamations_phase2.csv"
+ROOT = Path(__file__).resolve().parent.parent
+INPUT_CSV = ROOT / "data" / "processed" / "reclamations_phase1.csv"
+OUTPUT_CSV = ROOT / "data" / "processed" / "reclamations_phase2.csv"
 MODEL_NAME = "cardiffnlp/twitter-xlm-roberta-base-sentiment-multilingual"
 BATCH_SIZE = 16
 MAX_LENGTH = 256  # les reclamations sont courtes ; suffisant et plus rapide que 512

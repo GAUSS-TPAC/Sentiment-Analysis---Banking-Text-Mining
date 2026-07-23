@@ -27,7 +27,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR / "notebooks"))
-sys.path.insert(0, str(APP_DIR))
+sys.path.insert(0, str(APP_DIR / "pipeline"))
 
 from viz_utils import (  # noqa: E402
     annotated_heatmap,
@@ -41,10 +41,10 @@ from phase4_reporting import parse_montant  # noqa: E402
 st.set_page_config(page_title="Profileur de tickets", layout="wide")
 
 DEFAULT_CSV_CANDIDATES = [
-    "reclamations_phase3.csv",
-    "reclamations_phase2.csv",
-    "reclamations_phase1.csv",
-    "SRC_Intercom_Reclamation_202607201846.csv",
+    "data/processed/reclamations_phase3.csv",
+    "data/processed/reclamations_phase2.csv",
+    "data/processed/reclamations_phase1.csv",
+    "data/raw/SRC_Intercom_Reclamation_202607201846.csv",
 ]
 
 SENTIMENT_COLORS = {"negative": "#C44E52", "neutral": "#8C8C8C", "positive": "#55A868"}

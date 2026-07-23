@@ -22,13 +22,16 @@ Sortie :
 """
 
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-INPUT_CANDIDATES = ["reclamations_phase2.csv", "reclamations_phase1.csv"]
-OUTPUT_CSV = "reclamations_phase3.csv"
-TOPICS_SUMMARY_CSV = "topics_summary.csv"
+ROOT = Path(__file__).resolve().parent.parent
+_processed = ROOT / "data" / "processed"
+INPUT_CANDIDATES = [str(_processed / "reclamations_phase2.csv"), str(_processed / "reclamations_phase1.csv")]
+OUTPUT_CSV = _processed / "reclamations_phase3.csv"
+TOPICS_SUMMARY_CSV = _processed / "topics_summary.csv"
 
 MIN_TICKETS_FOR_TOPICS = 30   # en dessous, pas assez de volume pour des topics fiables
 MAX_TOPICS = 8

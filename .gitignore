@@ -1,8 +1,14 @@
 # ============================================================
-# DONNÉES SENSIBLES — ne jamais pusher
+# SENSITIVE DATA — never push
 # ============================================================
 
-# Fichiers sources et données brutes (données clients Afriland)
+# Raw & processed data (customer data — Afriland)
+data/raw/
+data/processed/
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Loose CSV/Excel files at any level
 *.csv
 *.xlsx
 *.xls

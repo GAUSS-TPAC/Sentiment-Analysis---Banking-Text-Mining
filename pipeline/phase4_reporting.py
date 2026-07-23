@@ -17,10 +17,13 @@ dashboard) :
 """
 
 import re
+from pathlib import Path
 
 import pandas as pd
 
-INPUT_CSV = "reclamations_phase3.csv"
+ROOT = Path(__file__).resolve().parent.parent
+_processed = ROOT / "data" / "processed"
+INPUT_CSV = _processed / "reclamations_phase3.csv"
 
 
 def parse_montant(value) -> float:
@@ -57,7 +60,7 @@ def main():
         )
         kpi_cat["nb_tickets"] = df.groupby("ticket_type_name").size()
         kpi_cat = kpi_cat.sort_values("nb_tickets", ascending=False)
-        kpi_cat.to_csv("kpi_sentiment_categorie.csv")
+        kpi_cat.to_csv(_processed / "kpi_sentiment_categorie.csv")
         print("\n=== Sentiment par categorie ===")
         print(kpi_cat.to_string())
 
@@ -70,7 +73,7 @@ def main():
             .round(3)
         )
         kpi_mois["nb_tickets"] = df.groupby("mois").size()
-        kpi_mois.to_csv("kpi_sentiment_mensuel.csv")
+        kpi_mois.to_csv(_processed / "kpi_sentiment_mensuel.csv")
 
         # --- 3. sentiment par canal -------------------------------------------
         kpi_canal = (
@@ -82,7 +85,7 @@ def main():
         )
         kpi_canal["nb_tickets"] = df.groupby("channel").size()
         kpi_canal = kpi_canal.sort_values("nb_tickets", ascending=False)
-        kpi_canal.to_csv("kpi_sentiment_canal.csv")
+        kpi_canal.to_csv(_processed / "kpi_sentiment_canal.csv")
         print("\n=== Sentiment par canal ===")
         print(kpi_canal.to_string())
 
@@ -94,7 +97,7 @@ def main():
         .round(0)
         .sort_values("montant_total", ascending=False)
     )
-    kpi_montant.to_csv("kpi_montants.csv")
+    kpi_montant.to_csv(_processed / "kpi_montants.csv")
     print("\n=== Montants (XAF) par categorie ===")
     print(kpi_montant.to_string())
 
@@ -111,7 +114,7 @@ def main():
             .reset_index()
             .sort_values(["nb_tickets", "pct_negatif"], ascending=[False, False])
         )
-        kpi_topics.to_csv("kpi_topics_sentiment.csv", index=False)
+        kpi_topics.to_csv(_processed / "kpi_topics_sentiment.csv", index=False)
 
         print("\n=== Top 10 points de douleur (volume x %negatif) ===")
         top_pain = kpi_topics[kpi_topics["nb_tickets"] >= 15].sort_values(
@@ -125,7 +128,7 @@ def main():
         print("[!] Pas de colonne topic_id : lancer phase3_topics.py d'abord "
               "pour le detail par sous-motif.")
 
-    print("\nFichiers KPI ecrits dans le repertoire courant.")
+    print(f"\nKPI files written to {_processed}")
 
 
 if __name__ == "__main__":
