@@ -1,0 +1,111 @@
+# ============================================================
+# DONNÉES SENSIBLES — ne jamais pusher
+# ============================================================
+
+# Fichiers sources et données brutes (données clients Afriland)
+*.csv
+*.xlsx
+*.xls
+*.json
+*.parquet
+*.feather
+*.pkl
+*.pickle
+
+# Exports et rapports intermédiaires
+# (les .md de présentation dans presentations/ sont OK, mais pas les exports de données)
+*_export.*
+*_backup.*
+
+# ============================================================
+# CREDENTIALS & CONFIGURATION SECRÈTE
+# ============================================================
+.env
+.env.*
+*.env
+config.ini
+config.yaml
+config.yml
+secrets.yaml
+secrets.json
+credentials.json
+token.json
+*.key
+*.pem
+*.p12
+*.pfx
+api_keys.*
+
+# ============================================================
+# PYTHON
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+.env/
+ENV/
+.conda/
+*.conda
+
+# ============================================================
+# JUPYTER
+# ============================================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ============================================================
+# MODÈLES ML — souvent volumineux
+# ============================================================
+*.bin
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.onnx
+*.safetensors
+models/
+saved_models/
+checkpoints/
+
+# ============================================================
+# ÉDITEURS & OS
+# ============================================================
+# LibreOffice locks
+.~lock.*#
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains / PyCharm
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# CLAUDE CODE (settings locaux uniquement)
+# ============================================================
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
