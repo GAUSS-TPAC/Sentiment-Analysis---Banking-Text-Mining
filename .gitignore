@@ -23,6 +23,15 @@ data/processed/
 *_export.*
 *_backup.*
 
+# Documents bureautiques générés (rapports, protocoles) — contiennent des données
+# ou constats sensibles, à ne pas versionner (les .md dans docs/ restent suivis)
+*.docx
+*.doc
+*.pptx
+*.ppt
+*.odt
+*.pdf
+
 # ============================================================
 # CREDENTIALS & CONFIGURATION SECRÈTE
 # ============================================================
