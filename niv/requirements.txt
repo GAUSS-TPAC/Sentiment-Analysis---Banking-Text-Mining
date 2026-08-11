@@ -1,0 +1,16 @@
+# Analyse des réclamations Intercom — dépendances
+#
+# Versions minimales testées sur Python 3.13.
+# `chargement.taux_completude` utilise `DataFrame.groupby(...).apply(include_groups=False)`,
+# introduit en pandas 2.2 : ne pas descendre en dessous.
+
+pandas>=2.2
+numpy>=1.26
+matplotlib>=3.8
+
+# Exécution des notebooks
+jupyterlab>=4.0
+ipykernel>=6.29
+
+# Optionnel — conversion notebook <-> script pour la mise sous contrôle de version
+jupytext>=1.16

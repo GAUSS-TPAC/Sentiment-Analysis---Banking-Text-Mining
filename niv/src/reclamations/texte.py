@@ -1,0 +1,275 @@
+"""
+Normalisation du texte client et taxonomie des motifs de réclamation.
+
+Ce module répond à la question « **pourquoi** les clients se plaignent ». Les
+colonnes structurées (`ticket_type_name`) disent seulement *dans quelle catégorie*
+le ticket a été rangé — SARA, COMPTE — ce qui est une nomenclature de produit, pas
+une cause. Seul le texte écrit par le client dit ce qui s'est réellement passé.
+
+Limite assumée de l'approche par mots-clés
+------------------------------------------
+La classification implémentée ici est **à base de règles**, et son rappel plafonne
+aux alentours de 43 % sur la base d'analyse. Ce n'est pas un défaut de réglage :
+les clients décrivent le même incident de vingt façons, en français et en anglais
+(« n'a pas abouti », « non dénoué », « non comptabilisé », « inachevé »,
+« it indicated that it went through but... »). Chaque motif ajouté récupère
+quelques dizaines de tickets et le rendement décroît vite.
+
+Ce plafond est donc **un résultat de l'analyse, pas un préalable technique** : il
+constitue l'argument chiffré en faveur d'une classification apprise (NLP) plutôt
+que de règles. Pour que cet argument tienne, il faut :
+
+1. mesurer la couverture explicitement -> :func:`couverture` ;
+2. auditer manuellement ce qui échappe aux règles -> :func:`echantillon_non_classes`.
+
+Les deux sont faits dans le notebook 04. Toute conclusion tirée des pourcentages
+de :func:`classer` doit être présentée comme un **plancher**, jamais comme une
+estimation de la vraie répartition.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+
+import pandas as pd
+
+from . import config
+
+# --------------------------------------------------------------------------- #
+# Normalisation
+# --------------------------------------------------------------------------- #
+
+
+def normaliser(valeur) -> str:
+    """Normalise un texte client pour la mise en correspondance par motifs.
+
+    Opérations : passage en minuscules, suppression des accents (décomposition
+    NFKD puis filtrage ASCII), et normalisation des espaces.
+
+    La suppression des accents est indispensable ici : l'export est encodé de
+    façon instable (on trouve « effectué », « effectuÃ© » et « effectue » dans le
+    même fichier), et les clients écrivent majoritairement sans accents depuis
+    un clavier mobile. Sans cette étape, un motif ``débité`` manque la majorité
+    des occurrences réelles.
+    """
+    if not isinstance(valeur, str):
+        return ""
+    sans_accent = (
+        unicodedata.normalize("NFKD", valeur).encode("ascii", "ignore").decode("ascii")
+    )
+    return re.sub(r"\s+", " ", sans_accent).strip().lower()
+
+
+def construire_texte(df: pd.DataFrame) -> pd.Series:
+    """Concatène titre et description en un texte normalisé unique.
+
+    Les deux champs sont fusionnés car ils sont **complémentaires et non
+    redondants** : 70 % des tickets n'ont pas de titre, 54 % pas de description,
+    mais seulement 55 % n'ont ni l'un ni l'autre. Certains tickets ne portent
+    l'information que dans le titre (« TRANSFERT NON ABOUTI »), d'autres que dans
+    la description.
+    """
+    titre = df["ticket_attributes__default_title_"].fillna("")
+    description = df["ticket_attributes__default_description_"].fillna("")
+    return (titre + " " + description).map(normaliser)
+
+
+def a_texte_exploitable(texte: pd.Series) -> pd.Series:
+    """Booléen : le texte dépasse :data:`config.LONGUEUR_TEXTE_MIN` caractères.
+
+    Le seuil écarte les contenus qui ne portent aucune information sur la cause
+    (« Woro Tsoh », « Compte employé », « RECLAMATION »). Sans lui, la couverture
+    de la taxonomie est artificiellement dégradée par des textes qu'aucune méthode,
+    règles ou NLP, ne pourrait classer.
+    """
+    return texte.str.len() > config.LONGUEUR_TEXTE_MIN
+
+
+# --------------------------------------------------------------------------- #
+# Taxonomie des motifs
+# --------------------------------------------------------------------------- #
+
+#: Familles causales, **dans l'ordre de priorité d'application**.
+#:
+#: L'ordre compte : les familles sont exclusives et la première qui correspond
+#: gagne. `erreur_client` passe avant `debit_non_credit` parce qu'un client qui
+#: s'est trompé de numéro décrit *aussi* de l'argent parti sans arriver — l'aveu
+#: explicite d'erreur (« au lieu du », « je me suis trompé ») est le signal
+#: discriminant, et il doit être testé en premier sous peine d'être absorbé par
+#: la famille dominante.
+#:
+#: Colonne `responsable` : c'est elle qui rend la taxonomie actionnable. Deux
+#: familles de même volume mais de responsables différents appellent des
+#: corrections différentes — un correctif technique côté passerelle, ou une
+#: refonte d'écran côté application.
+FAMILLES: tuple[tuple[str, str, str, str], ...] = (
+    (
+        "erreur_client",
+        "Erreur de saisie du client (mauvais bénéficiaire)",
+        r"(erreur de (numero|beneficiaire|destinataire|saisie)"
+        r"|mauvais (numero|beneficiaire|destinataire)"
+        r"|numero (erron|inactif)|beneficiaire erron"
+        r"|au lieu d[ue]|je me suis tromp|par erreur"
+        r"|wrong (number|recipient)|mistakenly)",
+        "UX de l'application",
+    ),
+    (
+        "debit_non_credit",
+        "Débité sans que le bénéficiaire soit crédité",
+        r"(debit\w+ (mais|et|sans)|debite sans"
+        r"|(n.?a |n.?est |pas |jamais )?(pas |jamais )?(ete )?(recu|percu)"
+        r"|non (abouti|credit|denoue|comptabilis|finalis|recu)"
+        r"|pas abouti|n.?aboutit pas|inacheve"
+        r"|n.?a pas (ete )?(approvisionn|credit|verse)"
+        r"|argent (n.?est pas|pas) arriv|pas arrive"
+        r"|sorti\w* de mon compte|transaction echou|echec (de|du) (transfert|transaction)"
+        r"|toujours pas|n.?a rien recu"
+        r"|(has|have)n.?t received|not received|didn.?t (receive|go through))",
+        "Système (banque <-> opérateur)",
+    ),
+    (
+        "acces_otp",
+        "Accès bloqué / OTP / authentification",
+        r"(\botp\b|code (de )?(verification|confirmation)"
+        r"|connexion|connecter|login|log in|mot de passe|password"
+        r"|compte (bloqu|desactiv)|reinitialis|can.?t (log|open|access))",
+        "Système (authentification)",
+    ),
+    (
+        "debit_injustifie",
+        "Débit injustifié, doublé, ou frais contestés",
+        r"(sans (aucune )?raison|debit (abusif|inexplique|double)"
+        r"|extourne|agios|frais|prelev|retranch"
+        r"|solde (incorrect|errone)|deducted|without any reason)",
+        "Système (banque)",
+    ),
+    (
+        "carte",
+        "Carte bancaire / distributeur",
+        r"(\bcarte\b|\bgab\b|\bdab\b|distributeur|\batm\b)",
+        "Système (monétique)",
+    ),
+    (
+        "demande_info",
+        "Demande d'information (pas une réclamation)",
+        r"(comment (faire|puis|je)|je (voudrais|souhaite) (savoir|connaitre)"
+        r"|renseignement|c.?est quoi|how (do|can) i)",
+        "Hors périmètre réclamation",
+    ),
+)
+
+#: Code affecté aux tickets qu'aucune règle ne reconnaît.
+NON_CLASSE = "non_classe"
+
+
+def classer(texte: pd.Series) -> pd.Series:
+    """Affecte chaque texte à une famille causale exclusive.
+
+    Applique les motifs de :data:`FAMILLES` dans l'ordre : le premier qui
+    correspond fixe la famille, les suivants ne sont testés que sur le reliquat.
+
+    Returns
+    -------
+    Series
+        Code de famille, ou :data:`NON_CLASSE`.
+    """
+    familles = pd.Series(NON_CLASSE, index=texte.index, dtype="object")
+    for code, _libelle, motif, _responsable in FAMILLES:
+        reste = familles == NON_CLASSE
+        correspond = texte.str.contains(motif, regex=True, na=False)
+        familles[reste & correspond] = code
+    return familles
+
+
+def libelles() -> dict[str, str]:
+    """Correspondance code de famille -> libellé lisible."""
+    d = {code: libelle for code, libelle, _, _ in FAMILLES}
+    d[NON_CLASSE] = "Non classé par les règles"
+    return d
+
+
+def responsables() -> dict[str, str]:
+    """Correspondance code de famille -> entité responsable de la correction."""
+    d = {code: resp for code, _, _, resp in FAMILLES}
+    d[NON_CLASSE] = "Indéterminé"
+    return d
+
+
+def couverture(familles: pd.Series) -> pd.DataFrame:
+    """Répartition des familles, avec le taux de couverture des règles.
+
+    La ligne :data:`NON_CLASSE` est **volontairement conservée** dans la table.
+    La masquer donnerait une répartition apparemment complète alors qu'elle ne
+    porte que sur 43 % des textes : c'est précisément l'erreur de lecture que ce
+    module cherche à empêcher.
+    """
+    n = len(familles)
+    t = familles.value_counts().rename("effectif").to_frame()
+    t["pct"] = (t["effectif"] / n * 100).round(1)
+    t["libelle"] = t.index.map(libelles())
+    t["responsable"] = t.index.map(responsables())
+    return t[["libelle", "responsable", "effectif", "pct"]]
+
+
+def echantillon_non_classes(
+    texte: pd.Series, familles: pd.Series, n: int = 20, graine: int = 3
+) -> pd.Series:
+    """Échantillon aléatoire reproductible de textes non classés, pour audit manuel.
+
+    L'audit manuel n'est pas une formalité : c'est lui qui permet de dire si le
+    reliquat est *une autre famille* (auquel cas la taxonomie est incomplète) ou
+    *la même famille formulée autrement* (auquel cas les règles sous-estiment une
+    famille connue). Les deux diagnostics mènent à des suites opposées.
+
+    La graine est fixée pour que l'échantillon audité soit le même à chaque
+    exécution du notebook, et donc que le décompte manuel reporté dans le
+    commentaire reste vérifiable.
+    """
+    reste = texte[familles == NON_CLASSE]
+    return reste.sample(min(n, len(reste)), random_state=graine)
+
+
+# --------------------------------------------------------------------------- #
+# Extraction d'entités
+# --------------------------------------------------------------------------- #
+
+#: Opérateurs de mobile money cités dans le texte.
+OPERATEURS = {
+    "Orange Money": r"(orange|\bom\b)",
+    "MTN MoMo": r"(\bmtn\b|momo)",
+    "Autre banque": r"(ecobank|\buba\b|bicec|sgc|virement bancaire)",
+}
+
+#: Sens du flux financier décrit par le client.
+SENS_FLUX = {
+    "Sortant (SARA -> mobile money)": r"(de mon compte sara|depuis (mon compte )?sara"
+    r"|sara (money )?(vers|a un|au)|transfert vers (orange|mtn|om)"
+    r"|from my sara (money )?account)",
+    "Entrant (banque/MoMo -> SARA)": r"(vers mon compte sara|vers (mon compte )?sara money"
+    r"|approvisionn\w* mon compte sara|recharge de mon compte"
+    r"|to my sara (money )?account)",
+}
+
+
+def detecter(texte: pd.Series, motifs: dict[str, str]) -> pd.DataFrame:
+    """Compte les occurrences d'un dictionnaire de motifs dans une série de textes.
+
+    Les motifs ne sont **pas exclusifs** : un même texte peut citer deux
+    opérateurs. Le tableau retourné compte donc des mentions, pas des tickets
+    répartis, et les pourcentages ne somment pas à 100.
+
+    Warning
+    -------
+    Un décompte de mentions ne se lit pas comme un taux de défaillance. Si
+    Orange Money est cité quatre fois plus que MTN, cela peut refléter un
+    problème quatre fois plus fréquent — ou simplement une base de clients
+    quatre fois plus large. Sans le volume de transactions par opérateur
+    (absent de cet export), l'écart est une **piste**, pas une conclusion.
+    """
+    n = len(texte)
+    lignes = []
+    for nom, motif in motifs.items():
+        m = texte.str.contains(motif, regex=True, na=False)
+        lignes.append({"motif": nom, "mentions": int(m.sum()), "pct": round(m.mean() * 100, 1)})
+    return pd.DataFrame(lignes).set_index("motif").assign(base=n)

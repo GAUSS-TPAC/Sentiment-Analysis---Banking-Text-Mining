@@ -1,0 +1,32 @@
+﻿colonne,motif
+type,constante (une seule valeur)
+ticket_state_type,constante (une seule valeur)
+ticket_type_ticket_type_attributes_data,constante (une seule valeur)
+ticket_type_archived,constante (une seule valeur)
+ticket_type_workspace_id,constante (une seule valeur)
+ticket_type_icon,constante (une seule valeur)
+ticket_type_type,constante (une seule valeur)
+contacts_type,constante (une seule valeur)
+ticket_type_ticket_type_attributes_type,constante (une seule valeur)
+linked_objects_type,constante (une seule valeur)
+ticket_parts_ticket_parts,constante (une seule valeur)
+ticket_parts_type,constante (une seule valeur)
+linked_objects_has_more,constante (une seule valeur)
+ticket_attributes_Order number,constante (une seule valeur)
+ticket_attributes_Amount,constante (une seule valeur)
+ticket_attributes_Reason,constante (une seule valeur)
+ticket_attributes_4 derniers chiffres de la carte,>= 99% manquante
+ticket_attributes_Date de depot,>= 99% manquante
+ticket_attributes_Agence concernee,>= 99% manquante
+ticket_type_description,>= 99% manquante
+ticket_attributes_Date de depot du dossier,>= 99% manquante
+ticket_attributes_Reference de la transaction1,>= 99% manquante
+ticket_attributes_Platforms,>= 99% manquante
+ticket_attributes_Supporting evidence,>= 99% manquante
+ticket_attributes_Root cause,>= 99% manquante
+ticket_attributes_Numero de compte1,>= 99% manquante
+ticket_attributes_Nom,>= 99% manquante
+ticket_attributes_RIB de l'etranger,>= 99% manquante
+ticket_attributes_Priority,>= 99% manquante
+ticket_attributes_Agence de domiciliation,>= 99% manquante
+ticket_attributes_Feature,>= 99% manquante

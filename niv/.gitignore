@@ -1,0 +1,15 @@
+# Données brutes — 11 Mo, contiennent des données clients nominatives.
+# Ne jamais versionner : noms, numéros de téléphone et numéros de compte en clair.
+data/
+*.csv
+!resultats/tables/*.csv
+
+# Sorties régénérables par exécution des notebooks
+resultats/figures/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/

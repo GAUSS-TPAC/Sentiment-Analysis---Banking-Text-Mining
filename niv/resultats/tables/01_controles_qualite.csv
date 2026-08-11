@@ -1,0 +1,10 @@
+﻿controle,resultat
+Tickets chargés,18094
+Colonnes,67
+Doublons (ligne complète),0
+Doublons sur id,0
+Doublons sur ticket_id,0
+Colonnes constantes,16
+Colonnes >= 99% manquantes,15
+Colonnes tronquées à l'export,2
+Incohérences created_at > updated_at,0

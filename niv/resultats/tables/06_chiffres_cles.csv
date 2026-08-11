@@ -1,0 +1,17 @@
+﻿axe,indicateur,valeur,source
+Périmètre,"Tickets, période opérationnelle","18,056",nb 02
+Périmètre,"Tickets, périmètre d'analyse causale","6,867",nb 03
+Périmètre,Base textuelle exploitable,"6,545",nb 03
+Périmètre,Couverture texte du périmètre d'analyse,95.3 %,nb 03
+Qualité,Tickets exclus — collecte dégradée (mars-mai 26),"11,189",nb 02
+Qualité,Messages perdus par troncature à l'export,"501,399",nb 01
+Cause,Famille dominante (règles seules),44.5 %,nb 04
+Cause,Famille dominante (corrigée par audit 8/20),~61 %,nb 04
+Cause,Argent prélevé à tort ou jamais arrivé (cumul corrigé),~80 %,nb 04
+Cause,Textes non reconnus par les règles,40.9 %,nb 04
+Traitement,Statut « resolved »,9.3 %,nb 05
+Traitement,Messages par ticket (médiane),26,nb 05
+Traitement,Messages échangés / agent / mois,"7,959",nb 05
+Récidive,Clients ayant déposé >= 2 réclamations,33.8 %,nb 05
+Récidive,Part du volume portée par ces clients,59.9 %,nb 05
+Récidive,"Re-dépôts (< 7 j, même motif)",19.5 %,nb 05
