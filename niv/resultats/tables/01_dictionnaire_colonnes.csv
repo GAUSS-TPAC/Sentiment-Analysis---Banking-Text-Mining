@@ -1,0 +1,68 @@
+﻿colonne,pct_manquant,nb_uniques,longueur_max,exemple
+type,0.0,1,6,ticket
+id,0.0,18094,15,[masqué]
+ticket_id,0.0,18094,9,[masqué]
+ticket_state_internal_label,0.0,4,19,Submitted
+ticket_state_type,0.0,1,12,ticket_state
+ticket_state_id,0.0,4,1,1
+ticket_state_category,0.0,4,19,submitted
+ticket_type_ticket_type_attributes_data,0.0,1,4,[masqué]
+ticket_type_created_at,0.0,16,23,2025-11-07 13:40:20.000
+ticket_type_archived,0.0,1,5,FALSE
+ticket_type_workspace_id,0.0,1,8,qc17uywk
+ticket_type_icon,0.0,1,1,
+ticket_type_name,0.0,17,26,SARA
+ticket_type_id,0.0,17,7,2954451
+ticket_type_type,0.0,1,11,ticket_type
+ticket_state_external_label,0.0,4,14,Submitted
+contacts_type,0.0,1,12,[masqué]
+ticket_type_updated_at,0.0,16,23,2025-11-07 13:45:11.000
+ticket_type_is_internal,0.0,2,5,FALSE
+ticket_type_ticket_type_attributes_type,0.0,1,4,[masqué]
+contacts_contacts,0.0,10955,193,[masqué]
+ticket_type_category,0.0,3,11,Customer
+linked_objects_data,0.0,18,239,[]
+linked_objects_type,0.0,1,4,list
+open,0.0,2,5,TRUE
+ticket_parts_total_count,0.0,103,5,29.0
+ticket_parts_ticket_parts,0.0,1,4,"[{""t"
+ticket_parts_type,0.0,1,16,ticket_part.list
+updated_at,0.0,16964,23,2026-07-18 09:57:23.000
+created_at,0.0,18064,23,2026-07-16 13:57:25.000
+team_assignee_id,0.0,4,7,7816990
+admin_assignee_id,0.0,8,8,8985527
+category,0.0,3,11,Customer
+is_shared,0.0,2,5,TRUE
+linked_objects_total_count,0.0,5,3,0.0
+linked_objects_has_more,0.0,1,5,FALSE
+channel,0.0,7,9,android
+ticket_attributes__default_description_,54.34,7988,800,[masqué]
+ticket_attributes_Nom du client,57.33,6125,247,[masqué]
+ticket_attributes_Numero_tel_client,57.43,5300,13,[masqué]
+ticket_attributes_Date de la transaction,57.73,2713,251,[masqué]
+ticket_attributes_Agence,57.88,112,36,[masqué]
+ticket_attributes_Montant en XAF,60.04,1460,11,[masqué]
+ticket_attributes__default_title_,70.34,3326,255,[masqué]
+ticket_attributes_Numero de compte,71.76,3960,255,[masqué]
+ticket_attributes_Reference de la transaction,78.51,3295,250,[masqué]
+ticket_attributes_Numero errone,96.84,461,11,[masqué]
+ticket_attributes_Montant,96.84,217,9,[masqué]
+ticket_attributes_Votre Numero,96.91,446,11,[masqué]
+ticket_attributes_4 derniers chiffres de la carte,99.37,101,4,[masqué]
+ticket_attributes_Date de depot,99.52,75,19,[masqué]
+ticket_attributes_Agence concernee,99.57,41,31,[masqué]
+ticket_type_description,99.85,4,172,"When a customer query cant be instantly resolved, convert t"
+ticket_attributes_Date de depot du dossier,99.91,14,16,[masqué]
+ticket_attributes_Reference de la transaction1,99.97,5,25,[masqué]
+ticket_attributes_Platforms,99.97,4,11,[masqué]
+ticket_attributes_Supporting evidence,99.97,2,255,[masqué]
+ticket_attributes_Root cause,99.98,4,92,[masqué]
+ticket_attributes_Numero de compte1,99.98,3,12,[masqué]
+ticket_attributes_Nom,99.98,4,14,[masqué]
+ticket_attributes_RIB de l'etranger,99.98,3,255,[masqué]
+ticket_attributes_Priority,99.98,3,25,[masqué]
+ticket_attributes_Agence de domiciliation,99.98,3,21,[masqué]
+ticket_attributes_Feature,99.99,2,13,[masqué]
+ticket_attributes_Order number,99.99,1,2,[masqué]
+ticket_attributes_Amount,99.99,1,6,[masqué]
+ticket_attributes_Reason,99.99,1,74,[masqué]
