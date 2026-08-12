@@ -63,8 +63,9 @@ def normaliser(valeur) -> str:
 
 #: Motifs d'identifiants à masquer dans le texte client, et leur jeton de remplacement.
 #:
-#: L'ordre compte : le numéro de compte (`[COMPTE]`) doit être
-#: reconnu avant les suites de chiffres isolées, sinon il serait découpé en morceaux.
+#: L'ordre compte : le numéro de compte, de la forme `NNNNN-NNNNN-NNNNNNNNNNN-NN`,
+#: doit être reconnu avant les suites de chiffres isolées, sinon il serait découpé
+#: en morceaux. Aucun exemple réel n'est cité ici : ce fichier est versionné.
 MOTIFS_IDENTIFIANTS: tuple[tuple[str, str], ...] = (
     (r"\b\d{4,5}(?:[-\s]\d{2,}){2,}\b", "[COMPTE]"),
     (r"\b[wW]\d{10,}\b", "[REF]"),

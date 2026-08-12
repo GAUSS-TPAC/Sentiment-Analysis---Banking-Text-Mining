@@ -94,7 +94,11 @@ def _extraire_contact_id(valeur) -> str | None:
 
     Format attendu ::
 
-        [{"type": "contact", "id": "6a2c...", "external_id": "[TEL]"}]
+        [{"type": "contact", "id": "<24 caractères hexadécimaux>",
+          "external_id": "<numéro de téléphone du client>"}]
+
+    L'exemple est volontairement schématique : une docstring est versionnée et
+    diffusée, elle ne porte donc jamais de valeur réelle.
 
     Retourne ``None`` si la cellule est vide, illisible ou sans contact.
     """
