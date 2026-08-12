@@ -24,6 +24,13 @@ DOSSIER_RESULTATS = RACINE / "resultats"
 DOSSIER_FIGURES = DOSSIER_RESULTATS / "figures"
 DOSSIER_TABLES = DOSSIER_RESULTATS / "tables"
 
+#: Sorties de travail contenant du texte client, **jamais versionnées**.
+#:
+#: Placé sous `data/`, couvert par la règle `data/` du `.gitignore`. Tout fichier
+#: portant du texte de réclamation va ici et nulle part ailleurs : `resultats/tables/`
+#: est versionné et diffusé, il est réservé aux agrégats.
+DOSSIER_AUDIT = RACINE / "data" / "audit"
+
 #: Emplacements où chercher l'export Intercom, par ordre de préférence.
 #:
 #: Le fichier est volumineux (~11 Mo) et n'a pas vocation à être versionné : il
@@ -128,6 +135,66 @@ LONGUEUR_TEXTE_MIN = 25
 #: Choix justifié dans le notebook 05 : le taux de « même motif » est de 81 % à
 #: moins de 3 jours et décroît régulièrement au-delà (68 % à 7-30 j, 58 % au-delà).
 FENETRE_REDEPOT_JOURS = 7
+
+# --------------------------------------------------------------------------- #
+# Confidentialité
+# --------------------------------------------------------------------------- #
+
+#: Fragments de noms de colonnes dont aucune valeur ne doit sortir dans une table.
+#:
+#: L'export contient des données nominatives en clair : noms, numéros de téléphone,
+#: numéros de compte, et le texte libre des réclamations, qui cite couramment des
+#: références de transaction. Une table de résultats est destinée à être versionnée
+#: et diffusée ; elle ne doit donc jamais porter d'exemple de valeur pour ces champs.
+#:
+#: Le masquage s'applique **à l'écriture** et non à la relecture : une donnée qui
+#: n'a jamais été écrite en clair ne peut pas fuiter.
+FRAGMENTS_COLONNES_SENSIBLES = (
+    "nom",
+    "numero",
+    "compte",
+    "_default_title_",
+    "_default_description_",
+    "reference",
+    "contacts",
+    "rib",
+)
+
+#: Noms de colonnes exactement sensibles, en complément des fragments ci-dessus.
+COLONNES_SENSIBLES = ("id", "ticket_id")
+
+#: Valeur émise à la place d'un exemple de valeur sensible.
+MARQUEUR_MASQUE = "[masqué]"
+
+#: Longueur maximale d'une cellule dans une table de `resultats/tables/`.
+#:
+#: Sépare un agrégat d'un texte client. Le libellé de famille le plus long du
+#: projet (« Débité sans que le bénéficiaire soit crédité ») fait 43 caractères,
+#: le nom de colonne le plus long 45, et l'exemple du dictionnaire est tronqué à
+#: 60. La médiane d'une description client est de 117 caractères. Le seuil de 200
+#: laisse donc passer tous les agrégats existants et arrête toute réclamation
+#: autre que la plus laconique.
+LONGUEUR_CELLULE_MAX = 200
+
+
+def est_colonne_sensible(nom: str) -> bool:
+    """Indique si une colonne porte des données à caractère personnel.
+
+    Le test est fait sur le **nom** de la colonne, en minuscules, par recherche de
+    fragments. Un test par liste exhaustive serait plus précis mais céderait au
+    premier attribut ajouté côté outil de support : les noms d'attributs suivent
+    une nomenclature métier stable (`Nom du client`, `Numero de compte`,
+    `Reference de la transaction`), et c'est elle qu'on filtre.
+    """
+    minuscule = nom.lower()
+    if minuscule in COLONNES_SENSIBLES:
+        return True
+    return any(fragment in minuscule for fragment in FRAGMENTS_COLONNES_SENSIBLES)
+
+
+# --------------------------------------------------------------------------- #
+# Seuils d'analyse (suite)
+# --------------------------------------------------------------------------- #
 
 #: Borne haute de plausibilité sur `Montant en XAF`, en XAF.
 #: Au-delà, la distribution présente un amas artificiel de 44 valeurs entre 690 M

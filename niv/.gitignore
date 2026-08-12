@@ -1,8 +1,19 @@
 # Données brutes — 11 Mo, contiennent des données clients nominatives.
 # Ne jamais versionner : noms, numéros de téléphone et numéros de compte en clair.
+# `data/audit/` relève de la même règle : c'est là que vont les fichiers de travail
+# contenant du texte de réclamation (cf. chargement.sauver_audit).
 data/
 *.csv
+
+# `resultats/tables/` est versionné et diffusé : il est réservé aux AGRÉGATS.
+# L'exception ci-dessous est encadrée par deux garde-fous côté code :
+#   - chargement.sauver_table() refuse toute cellule de plus de 200 caractères ;
+#   - chargement.dictionnaire_colonnes() masque les champs nominatifs.
+# Aucun fichier de texte client ne doit être ajouté ici, même manuellement.
 !resultats/tables/*.csv
+resultats/tables/*audit*.csv
+resultats/tables/*verbatim*.csv
+resultats/tables/*echantillon*.csv
 
 # Sorties régénérables par exécution des notebooks
 resultats/figures/

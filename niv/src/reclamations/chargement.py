@@ -166,18 +166,36 @@ def dictionnaire_colonnes(df: pd.DataFrame) -> pd.DataFrame:
     à l'export** : une colonne JSON dont la longueur maximale est de 4 caractères
     (`[{"t`) n'est pas une colonne constante, c'est une colonne dont le contenu
     a été perdu à l'extraction.
+
+    Confidentialité
+    ---------------
+    La colonne ``exemple`` est **masquée** pour les champs identifiés comme
+    sensibles par :func:`config.est_colonne_sensible` — noms, numéros, texte libre.
+    Cette table est versionnée et diffusée ; sans ce masquage, elle exposerait le
+    nom et le numéro de téléphone d'un client réel, ceux de la première ligne non
+    nulle rencontrée.
+
+    Le masquage ne dégrade aucun contrôle : ``longueur_max``, ``nb_uniques`` et
+    ``pct_manquant`` sont inchangés, et ce sont eux qui portent la détection de
+    troncature et la décision d'écarter une colonne.
     """
     lignes = []
     for col in df.columns:
         s = df[col]
         non_nul = s.dropna()
+        if config.est_colonne_sensible(col):
+            exemple = config.MARQUEUR_MASQUE
+        elif len(non_nul):
+            exemple = non_nul.iloc[0][:60]
+        else:
+            exemple = ""
         lignes.append(
             {
                 "colonne": col,
                 "pct_manquant": round(s.isna().mean() * 100, 2),
                 "nb_uniques": s.nunique(dropna=True),
                 "longueur_max": int(non_nul.str.len().max()) if len(non_nul) else 0,
-                "exemple": non_nul.iloc[0][:60] if len(non_nul) else "",
+                "exemple": exemple,
             }
         )
     return pd.DataFrame(lignes).sort_values("pct_manquant").reset_index(drop=True)
@@ -302,8 +320,59 @@ def profil_comparatif(
 
 
 def sauver_table(df: pd.DataFrame, nom: str, index: bool = True) -> None:
-    """Écrit une table dans `resultats/tables/` en CSV UTF-8 (BOM pour Excel)."""
+    """Écrit une table d'agrégats dans `resultats/tables/`, en CSV UTF-8 (BOM Excel).
+
+    Ce dossier est **versionné et diffusé**. Il est réservé aux agrégats : aucune
+    table écrite ici ne doit contenir de texte de réclamation ni d'identifiant
+    client. Pour un fichier de travail portant du texte, utiliser
+    :func:`sauver_audit`.
+
+    Raises
+    ------
+    ValueError
+        Si une cellule dépasse :data:`config.LONGUEUR_CELLULE_MAX` caractères.
+        C'est le garde-fou : un agrégat tient en quelques dizaines de caractères,
+        une réclamation non. Plutôt que de compter sur la vigilance à la relecture,
+        la fonction **refuse d'écrire** le fichier dangereux. Le message indique
+        la colonne fautive et oriente vers :func:`sauver_audit`.
+    """
+    trop_long = _colonnes_trop_longues(df)
+    if trop_long:
+        raise ValueError(
+            f"Table '{nom}' refusée : les colonnes {trop_long} dépassent "
+            f"{config.LONGUEUR_CELLULE_MAX} caractères et ressemblent à du texte client. "
+            "`resultats/tables/` est versionné et diffusé. "
+            "Utiliser `sauver_audit()` après `texte.masquer_identifiants()`."
+        )
     config.creer_dossiers_sortie()
     chemin = config.DOSSIER_TABLES / f"{nom}.csv"
     df.to_csv(chemin, index=index, encoding="utf-8-sig")
     print(f"  -> {chemin.relative_to(config.RACINE)}")
+
+
+def _colonnes_trop_longues(df: pd.DataFrame) -> list[str]:
+    """Colonnes (index compris) dont une valeur dépasse la longueur d'un agrégat."""
+    fautives = []
+    a_tester = [(str(c), df[c]) for c in df.columns]
+    a_tester.append(("<index>", pd.Series(df.index)))
+    for nom, serie in a_tester:
+        textuel = serie.dropna().astype(str)
+        if len(textuel) and textuel.str.len().max() > config.LONGUEUR_CELLULE_MAX:
+            fautives.append(nom)
+    return fautives
+
+
+def sauver_audit(df: pd.DataFrame, nom: str, index: bool = True) -> None:
+    """Écrit un fichier de travail contenant du texte client, **hors dépôt**.
+
+    Destination : `data/audit/`, couvert par la règle `data/` du `.gitignore`.
+
+    L'audit manuel du reliquat suppose de lire de vraies réclamations ; ces textes
+    ne peuvent donc pas être supprimés. Ils sont en revanche masqués à l'écriture
+    (:func:`texte.masquer_identifiants`, appelé par l'appelant) et n'entrent jamais
+    dans `resultats/tables/`.
+    """
+    config.DOSSIER_AUDIT.mkdir(parents=True, exist_ok=True)
+    chemin = config.DOSSIER_AUDIT / f"{nom}.csv"
+    df.to_csv(chemin, index=index, encoding="utf-8-sig")
+    print(f"  -> {chemin.relative_to(config.RACINE)}  (hors dépôt, non versionné)")

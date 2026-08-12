@@ -61,6 +61,45 @@ def normaliser(valeur) -> str:
     return re.sub(r"\s+", " ", sans_accent).strip().lower()
 
 
+#: Motifs d'identifiants à masquer dans le texte client, et leur jeton de remplacement.
+#:
+#: L'ordre compte : le numéro de compte (`[COMPTE]`) doit être
+#: reconnu avant les suites de chiffres isolées, sinon il serait découpé en morceaux.
+MOTIFS_IDENTIFIANTS: tuple[tuple[str, str], ...] = (
+    (r"\b\d{4,5}(?:[-\s]\d{2,}){2,}\b", "[COMPTE]"),
+    (r"\b[wW]\d{10,}\b", "[REF]"),
+    (r"(?:\+?237[\s-]?)?\b6\d{8}\b", "[TEL]"),
+    (r"\b[\w.+-]+@[\w-]+\.[\w.]+\b", "[EMAIL]"),
+    (r"\b\d{9,}\b", "[NUM]"),
+)
+
+
+def masquer_identifiants(valeur: str) -> str:
+    """Remplace les identifiants d'un texte client par des jetons stables.
+
+    Applique :data:`MOTIFS_IDENTIFIANTS` : numéros de compte, références de
+    transaction, numéros de téléphone camerounais, adresses électroniques, puis
+    toute suite d'au moins neuf chiffres restante.
+
+    Le sens de la plainte est intégralement préservé — « débité mais [TEL] n'a
+    rien reçu » se classe exactement comme l'original. Ce sont les montants qui
+    portent l'information analytique, et ils sont à quatre ou cinq chiffres :
+    le seuil de neuf chiffres du dernier motif les laisse intacts.
+
+    Warning
+    -------
+    Cette fonction ne masque **pas les noms de personnes**, qu'aucun motif
+    régulier ne reconnaît de façon fiable dans un texte libre. Un texte masqué
+    n'est donc pas anonyme : il reste à diffusion restreinte, et n'a pas
+    vocation à être versionné.
+    """
+    if not isinstance(valeur, str):
+        return ""
+    for motif, jeton in MOTIFS_IDENTIFIANTS:
+        valeur = re.sub(motif, jeton, valeur)
+    return valeur
+
+
 def construire_texte(df: pd.DataFrame) -> pd.Series:
     """Concatène titre et description en un texte normalisé unique.
 
