@@ -7,6 +7,8 @@
 pandas>=2.2
 numpy>=1.26
 matplotlib>=3.8
+openpyxl>=3.1   # lecture de l'export complémentaire conversations_*.xlsx (chargement.charger_messages_ouverture)
+scipy>=1.11     # chargement.cramer_v (test de représentativité, notebook 03)
 
 # Exécution des notebooks
 jupyterlab>=4.0

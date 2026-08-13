@@ -9,7 +9,7 @@ une cause. Seul le texte écrit par le client dit ce qui s'est réellement pass�
 Limite assumée de l'approche par mots-clés
 ------------------------------------------
 La classification implémentée ici est **à base de règles**, et son rappel plafonne
-aux alentours de 43 % sur la base d'analyse. Ce n'est pas un défaut de réglage :
+aux alentours de 57 % sur la base d'analyse (notebook 04). Ce n'est pas un défaut de réglage :
 les clients décrivent le même incident de vingt façons, en français et en anglais
 (« n'a pas abouti », « non dénoué », « non comptabilisé », « inachevé »,
 « it indicated that it went through but... »). Chaque motif ajouté récupère
@@ -44,19 +44,29 @@ from . import config
 def normaliser(valeur) -> str:
     """Normalise un texte client pour la mise en correspondance par motifs.
 
-    Opérations : passage en minuscules, suppression des accents (décomposition
-    NFKD puis filtrage ASCII), et normalisation des espaces.
+    Opérations : suppression des balises HTML, passage en minuscules,
+    suppression des accents (décomposition NFKD puis filtrage ASCII), et
+    normalisation des espaces.
 
     La suppression des accents est indispensable ici : l'export est encodé de
     façon instable (on trouve « effectué », « effectuÃ© » et « effectue » dans le
     même fichier), et les clients écrivent majoritairement sans accents depuis
     un clavier mobile. Sans cette étape, un motif ``débité`` manque la majorité
     des occurrences réelles.
+
+    La suppression des balises HTML (``<p>``, ``<br>``...) est nécessaire depuis
+    l'intégration du message d'ouverture récupéré dans l'export conversations
+    (`chargement.charger_messages_ouverture`) : ce texte-là, contrairement au
+    titre/description du CSV plat, est parfois du HTML enrichi. Sans ce
+    nettoyage, ``<br>`` survit à la suppression des accents et pollue le
+    vocabulaire du topic modeling (notebook 07) comme un terme « br » à part
+    entière — repéré en audit, corrigé ici plutôt que dans chaque appelant.
     """
     if not isinstance(valeur, str):
         return ""
+    sans_balises = re.sub(r"<[^>]+>", " ", valeur)
     sans_accent = (
-        unicodedata.normalize("NFKD", valeur).encode("ascii", "ignore").decode("ascii")
+        unicodedata.normalize("NFKD", sans_balises).encode("ascii", "ignore").decode("ascii")
     )
     return re.sub(r"\s+", " ", sans_accent).strip().lower()
 
@@ -113,6 +123,37 @@ def construire_texte(df: pd.DataFrame) -> pd.Series:
     titre = df["ticket_attributes__default_title_"].fillna("")
     description = df["ticket_attributes__default_description_"].fillna("")
     return (titre + " " + description).map(normaliser)
+
+
+def enrichir_avec_messages_ouverture(texte_csv: pd.Series, messages: pd.Series) -> pd.Series:
+    """Complète le texte construit à partir du CSV plat avec le message
+    d'ouverture récupéré dans l'export conversations Intercom, quand il existe.
+
+    Le CSV plat tronque le fil de conversation à l'extraction (§2.4 du
+    protocole) ; l'export complémentaire (:func:`chargement.charger_messages_ouverture`)
+    porte, pour une partie des tickets, le message réel. Cette fonction
+    concatène les deux plutôt que de remplacer l'un par l'autre : le titre et
+    la description du CSV restent utiles même quand un message d'ouverture est
+    retrouvé, exactement comme titre et description sont déjà complémentaires
+    entre eux (:func:`construire_texte`).
+
+    Parameters
+    ----------
+    texte_csv :
+        Sortie de :func:`construire_texte` — déjà normalisée.
+    messages :
+        Sortie de `chargement.charger_messages_ouverture` — indexée par `id`,
+        **pas encore normalisée**. Réindexée sur `texte_csv` ; les tickets sans
+        message correspondant reçoivent une chaîne vide.
+
+    Returns
+    -------
+    Series
+        Texte enrichi, normalisé, espaces multiples réduits.
+    """
+    ajout = messages.reindex(texte_csv.index).fillna("").map(normaliser)
+    fusion = (texte_csv + " " + ajout).str.strip()
+    return fusion.str.replace(r"\s+", " ", regex=True)
 
 
 def a_texte_exploitable(texte: pd.Series) -> pd.Series:
@@ -250,6 +291,58 @@ def couverture(familles: pd.Series) -> pd.DataFrame:
     t["libelle"] = t.index.map(libelles())
     t["responsable"] = t.index.map(responsables())
     return t[["libelle", "responsable", "effectif", "pct"]]
+
+
+def estimation_corrigee(couverture_par_famille: pd.DataFrame) -> pd.DataFrame:
+    """Extrapole l'audit manuel du reliquat (`config.AUDIT_MANUEL`) sur
+    l'ensemble des textes non classés.
+
+    Implémente la règle d'intégralité du protocole (§5.1) : chaque famille
+    observée dans l'audit — y compris celles qui n'ont qu'un seul texte, et le
+    dysfonctionnement hors taxonomie (`config.AUDIT_MANUEL_HORS_TAXONOMIE`) —
+    est redistribuée sur le reliquat, aucune n'est écartée. Centralisé ici
+    pour qu'un seul calcul serve le notebook qui établit l'audit (04) et tout
+    notebook qui en reprend les chiffres clés (06) — les deux dérivaient
+    auparavant la même correction séparément, avec un risque de désaccord
+    silencieux entre les deux.
+
+    Parameters
+    ----------
+    couverture_par_famille :
+        Sortie de :func:`couverture` — colonne `pct`, indexée par code de
+        famille, incluant la ligne :data:`NON_CLASSE`.
+
+    Returns
+    -------
+    DataFrame
+        Une ligne par famille de `config.AUDIT_MANUEL`, plus une ligne pour
+        `config.AUDIT_MANUEL_HORS_TAXONOMIE` : `pct_regles`, `pct_reliquat`,
+        `pct_corrige`.
+    """
+    part_non_classe = couverture_par_famille.loc[NON_CLASSE, "pct"]
+    lignes = []
+    for code, n in config.AUDIT_MANUEL.items():
+        regle = couverture_par_famille.loc[code, "pct"]
+        part_reliquat = part_non_classe * (n / config.AUDIT_MANUEL_TAILLE)
+        lignes.append(
+            {
+                "famille": libelles()[code],
+                "pct_regles": regle,
+                "pct_reliquat": round(part_reliquat, 1),
+                "pct_corrige": round(regle + part_reliquat, 1),
+            }
+        )
+    for libelle, n in config.AUDIT_MANUEL_HORS_TAXONOMIE.items():
+        part_reliquat = part_non_classe * (n / config.AUDIT_MANUEL_TAILLE)
+        lignes.append(
+            {
+                "famille": libelle,
+                "pct_regles": 0.0,
+                "pct_reliquat": round(part_reliquat, 1),
+                "pct_corrige": round(part_reliquat, 1),
+            }
+        )
+    return pd.DataFrame(lignes).set_index("famille")
 
 
 def echantillon_non_classes(

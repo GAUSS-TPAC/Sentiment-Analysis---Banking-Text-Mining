@@ -43,6 +43,7 @@ _CANDIDATS_DONNEES = (
     RACINE,
     RACINE.parent / "data" / "raw",
     RACINE.parent,
+    RACINE.parent / "dataset",
 )
 
 #: Motif de nom de l'export brut Intercom.
@@ -80,6 +81,48 @@ def creer_dossiers_sortie() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Source complémentaire — messages d'ouverture (export conversations Intercom)
+# --------------------------------------------------------------------------- #
+
+#: Emplacements où chercher l'export complémentaire des conversations Intercom.
+#:
+#: Ce fichier porte, pour une partie des tickets, le message d'ouverture réel
+#: (`source_body`), non tronqué contrairement au CSV plat (§2.4 du protocole).
+#: Mêmes règles de recherche que :func:`chemin_donnees` : volumineux (~19 Mo),
+#: pas d'emplacement fixe imposé.
+_CANDIDATS_CONVERSATIONS = (
+    RACINE / "data" / "raw" / "Interc",
+    RACINE.parent / "dataset" / "Interc",
+    RACINE.parent / "dataset",
+)
+
+#: Motif de nom de l'export conversations Intercom.
+MOTIF_CONVERSATIONS = "conversations_*.xlsx"
+
+#: Auteurs dont le message compte comme un message **client** (par opposition
+#: à un agent ou une équipe interne). Vérifié sur l'export : `user` et `lead`
+#: couvrent 96,8 % des lignes de conversation liées à un ticket ; `admin` et
+#: `team` (les 3,2 % restants) sont des tickets ouverts par un agent pour le
+#: compte d'un client — leur premier message n'est pas la plainte du client.
+AUTEURS_CLIENT = ("user", "lead")
+
+
+def chemin_conversations() -> Path | None:
+    """Localise l'export conversations Intercom le plus récent, si présent.
+
+    Contrairement à :func:`chemin_donnees`, l'absence de ce fichier n'est pas
+    une erreur : c'est une source complémentaire, optionnelle, qui enrichit le
+    texte quand elle est disponible. Retourne ``None`` si rien n'est trouvé —
+    à l'appelant de décider si c'est bloquant.
+    """
+    trouves: list[Path] = []
+    for dossier in _CANDIDATS_CONVERSATIONS:
+        if dossier.is_dir():
+            trouves.extend(sorted(dossier.glob(MOTIF_CONVERSATIONS)))
+    return trouves[-1] if trouves else None
+
+
+# --------------------------------------------------------------------------- #
 # Constantes de périmètre temporel
 # --------------------------------------------------------------------------- #
 
@@ -103,19 +146,36 @@ DEBUT_PERIODE_OPERATIONNELLE = pd.Timestamp("2025-11-01")
 #: Établi dans : notebooks/02_rupture_de_collecte.ipynb
 DATE_RUPTURE_COLLECTE = pd.Timestamp("2026-03-13")
 
-#: Mois exclus du périmètre d'analyse causale (collecte dégradée).
+#: Mois où la collecte des attributs de ticket a été dégradée (repère descriptif).
 #:
-#: La couverture texte y est de 16 %, 3 % et 28 % respectivement. Surtout, les
-#: tickets qui ont survécu à la panne ne sont pas représentatifs de ceux qui
-#: n'en ont pas (cf. test de représentativité, notebook 03) : ils sur-représentent
-#: BENEFICIAIRE ERRONE (14,8 % vs 0,3 %) et sous-représentent whatsapp
-#: (2,1 % vs 19,7 %). Ce sous-ensemble est trié par le bug lui-même.
-#: Établi dans : notebooks/03_perimetre_et_representativite.ipynb
+#: La couverture texte y est de 16 %, 3 % et 28 % respectivement (avant
+#: enrichissement, cf. ci-dessous). **N'est plus le critère d'exclusion** du
+#: périmètre d'analyse causale depuis l'intégration de l'export conversations
+#: (:data:`SEUIL_COUVERTURE_JOURNALIERE`) — conservé comme repère pour les
+#: figures et les commentaires du notebook 02, qui datent l'incident lui-même.
+#: Établi dans : notebooks/02_rupture_de_collecte.ipynb
 MOIS_COLLECTE_DEGRADEE = (
     pd.Period("2026-03", freq="M"),
     pd.Period("2026-04", freq="M"),
     pd.Period("2026-05", freq="M"),
 )
+
+#: Seuil de couverture texte **journalière** en-dessous duquel une journée est
+#: exclue du périmètre d'analyse causale (`chargement.perimetre_analyse`).
+#:
+#: Remplace l'exclusion par mois entier (:data:`MOIS_COLLECTE_DEGRADEE`) :
+#: protocole §3.4 — sur les 247 journées de la période opérationnelle, 59 sont
+#: à 0-10 % de couverture et 184 à 70-100 % ; seules quelques journées se
+#: situent entre les deux, ce qui fait de 50 % un seuil qui ne tranche presque
+#: rien. La couverture est calculée sur le texte **enrichi**
+#: (`chargement.construire_texte_enrichi`, titre + description + message
+#: d'ouverture récupéré dans l'export conversations Intercom quand disponible)
+#: — appliquer ce seuil au texte enrichi plutôt qu'au CSV seul fait passer le
+#: périmètre de 7 563 à 9 161 tickets, validé par le même test de
+#: représentativité (V de Cramér ≤ 0,20, notebook 03) que la version non
+#: enrichie.
+#: Établi dans : notebooks/03_perimetre_et_representativite.ipynb
+SEUIL_COUVERTURE_JOURNALIERE = 0.50
 
 #: Dernier mois de l'export, partiel (extraction faite le 20/07/2026).
 #: À ne jamais comparer tel quel à un mois complet.
@@ -135,6 +195,30 @@ LONGUEUR_TEXTE_MIN = 25
 #: Choix justifié dans le notebook 05 : le taux de « même motif » est de 81 % à
 #: moins de 3 jours et décroît régulièrement au-delà (68 % à 7-30 j, 58 % au-delà).
 FENETRE_REDEPOT_JOURS = 7
+
+# --------------------------------------------------------------------------- #
+# Audit manuel du reliquat non classé (notebook 04)
+# --------------------------------------------------------------------------- #
+
+#: Décompte de l'audit manuel du reliquat non classé — 20 textes, graine 3,
+#: périmètre à 8 348 textes (notebooks 03+04, texte enrichi + balises HTML
+#: retirées). Centralisé ici, plutôt que dupliqué dans chaque notebook qui
+#: l'utilise (04, 06), pour qu'une ré-lecture de l'audit (nouvel export,
+#: nouvelle graine) ne se corrige qu'à un seul endroit — écart déjà rencontré
+#: une fois (protocole, écart A3). Toutes les familles observées dans l'audit
+#: sont représentées (règle d'intégralité, protocole §5.1) ;
+#: `AUDIT_MANUEL_HORS_TAXONOMIE` couvre celles qu'aucune règle de
+#: `texte.FAMILLES` ne code encore (§4.2, écart A2). `erreur_client` et
+#: `carte` n'apparaissent pas dans ce tirage de 20 textes (absentes, pas à
+#: zéro par choix) : rien à en redistribuer cette fois.
+AUDIT_MANUEL_TAILLE = 20
+AUDIT_MANUEL = {
+    "debit_non_credit": 12,
+    "debit_injustifie": 2,
+    "acces_otp": 1,
+    "demande_info": 1,
+}
+AUDIT_MANUEL_HORS_TAXONOMIE = {"dysfonctionnement_application / hors taxonomie (§4.2)": 4}
 
 # --------------------------------------------------------------------------- #
 # Confidentialité

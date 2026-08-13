@@ -23,7 +23,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from . import config
+from . import config, texte
 
 # --------------------------------------------------------------------------- #
 # Chargement
@@ -51,6 +51,47 @@ def charger_brut(chemin=None) -> pd.DataFrame:
     """
     chemin = chemin or config.chemin_donnees()
     return pd.read_csv(chemin, dtype=str, low_memory=False)
+
+
+def charger_messages_ouverture(chemin=None) -> pd.Series:
+    """Charge le message d'ouverture de chaque ticket, depuis l'export
+    conversations Intercom complémentaire (`conversations_*.xlsx`).
+
+    Le CSV plat tronque le fil de conversation à 4 caractères (`colonnes_tronquees`,
+    §2.4 du protocole). Cet export séparé — une ligne par conversation, pas par
+    ticket — porte le contenu réel dans `source_body`, non tronqué.
+
+    Jointure
+    --------
+    Par la colonne `id` de cet export **contre la colonne `id` du CSV plat**,
+    jamais contre `ticket_id` : la colonne `ticket_id` de cet export est
+    auto-référente (elle vaut la plupart du temps l'`id` de la même ligne) et
+    ne pointe vers aucun ticket. Vérifié manuellement avant d'écrire cette
+    fonction — c'est un piège de nommage propre à cet export, pas une
+    convention Intercom générale.
+
+    Un ticket a en général plusieurs lignes de conversation associées (sa
+    création, les réponses, les réouvertures) ; seule la ligne dont l'`id`
+    égale l'`id` du ticket porte son message d'ouverture, donc au plus une
+    ligne par ticket survit à cette jointure — pas de déduplication à faire
+    sur le fond, `drop_duplicates` ne sert qu'à écarter un doublon accidentel
+    d'export.
+
+    Returns
+    -------
+    Series
+        Indexée par `id` (str, comparable à la colonne `id` de :func:`charger_brut`),
+        message d'ouverture brut (non normalisé, non masqué). Vide si aucun
+        export conversations n'est trouvé — source complémentaire, pas bloquante.
+    """
+    chemin = chemin or config.chemin_conversations()
+    if chemin is None:
+        return pd.Series(dtype="object", name="source_body")
+
+    conv = pd.read_excel(chemin, dtype={"id": "int64"})
+    conv["id"] = conv["id"].astype(str)
+    client = conv[conv["source_author_type"].isin(config.AUTEURS_CLIENT)]
+    return client.drop_duplicates("id").set_index("id")["source_body"]
 
 
 def typer(df: pd.DataFrame) -> pd.DataFrame:
@@ -126,18 +167,61 @@ def perimetre_operationnel(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["date_creation"] >= config.DEBUT_PERIODE_OPERATIONNELLE].copy()
 
 
-def perimetre_analyse(df: pd.DataFrame) -> pd.DataFrame:
-    """Restreint au périmètre d'analyse causale : opérationnel **moins** mars-mai 2026.
+def construire_texte_enrichi(df: pd.DataFrame, messages_ouverture: pd.Series | None = None) -> pd.Series:
+    """Texte de la réclamation, normalisé, complété par le message d'ouverture
+    récupéré dans l'export conversations Intercom quand il est disponible.
 
-    C'est le périmètre sur lequel les conclusions de motifs sont valides. Il couvre
-    six mois de fonctionnement normal (nov. 2025 - fév. 2026, juin - juil. 2026)
-    et représente 6 867 tickets, avec 95,5 % de couverture texte.
+    Combine :func:`texte.construire_texte` (titre + description du CSV plat,
+    tronqué à l'extraction — §2.4 du protocole) et
+    :func:`texte.enrichir_avec_messages_ouverture` (message réel, non tronqué,
+    quand l'export complémentaire le porte — §3.4). Le résultat est aligné sur
+    l'index de `df`, pas sur `id` : utilisable directement,
+    ``df["texte"] = chargement.construire_texte_enrichi(df)``.
+
+    Parameters
+    ----------
+    messages_ouverture :
+        Par défaut, rechargé via :func:`charger_messages_ouverture`. À passer
+        explicitement pour éviter de relire le fichier xlsx (~5 s) à chaque
+        appel dans une même session — voir l'usage dans `perimetre_analyse`.
+    """
+    if messages_ouverture is None:
+        messages_ouverture = charger_messages_ouverture()
+    texte_csv = texte.construire_texte(df)
+    par_id = texte_csv.set_axis(df["id"].to_numpy())
+    enrichi = texte.enrichir_avec_messages_ouverture(par_id, messages_ouverture)
+    return enrichi.set_axis(df.index)
+
+
+def perimetre_analyse(df: pd.DataFrame, messages_ouverture: pd.Series | None = None) -> pd.DataFrame:
+    """Restreint au périmètre d'analyse causale : période opérationnelle,
+    restreinte aux journées dont la couverture texte **enrichie** atteint
+    :data:`config.SEUIL_COUVERTURE_JOURNALIERE`.
+
+    C'est le périmètre sur lequel les conclusions de motifs sont valides.
+    Remplace l'ancienne règle par mois entier (`config.MOIS_COLLECTE_DEGRADEE`)
+    par une règle à la journée appliquée au texte enrichi du message
+    d'ouverture récupéré dans l'export conversations Intercom
+    (:func:`construire_texte_enrichi`) — protocole §3.4. Représente 9 161
+    tickets, validé par le test de représentativité du notebook 03 (V de
+    Cramér 0,169 sur `ticket_type_name`, 0,121 sur `channel`, tous deux sous
+    le seuil de 0,20 — contre 0,261 et 0,206, au-dessus du seuil, si la fenêtre
+    dégradée entière est réintégrée sans le filtre journalier).
+
+    Le DataFrame retourné porte deux colonnes ajoutées, `texte` (enrichi,
+    normalisé) et `a_texte` (booléen, :func:`texte.a_texte_exploitable`), pour
+    qu'aucun notebook consommateur n'ait à les reconstruire séparément — le
+    risque, sinon, est d'oublier l'enrichissement dans un notebook et de
+    retomber silencieusement sur l'ancien périmètre.
 
     Le passage par cette fonction, plutôt que par un filtre écrit à la main dans
     chaque notebook, garantit que tous les chiffres publiés portent sur la même base.
     """
     op = perimetre_operationnel(df)
-    return op[~op["mois"].isin(config.MOIS_COLLECTE_DEGRADEE)].copy()
+    op["texte"] = construire_texte_enrichi(op, messages_ouverture)
+    op["a_texte"] = texte.a_texte_exploitable(op["texte"])
+    couverture_jour = op.groupby("jour")["a_texte"].transform("mean")
+    return op[couverture_jour >= config.SEUIL_COUVERTURE_JOURNALIERE].copy()
 
 
 def montants_plausibles(df: pd.DataFrame) -> pd.DataFrame:
@@ -321,6 +405,31 @@ def profil_comparatif(
         t["ecart_pts"] = (t["groupe_A_pct"] - t["groupe_B_pct"]).round(1)
         resultats[col] = t.round(1).sort_values("groupe_A_pct", ascending=False)
     return resultats
+
+
+def cramer_v(groupe: pd.Series, variable: pd.Series) -> float:
+    """V de Cramér entre une variable de groupe (2 modalités ou plus) et une
+    variable catégorielle observable — mesure synthétique de représentativité
+    (protocole §4.4).
+
+    Normalise le χ² par la taille de l'échantillon et le nombre de catégories,
+    ce qui permet de comparer des tests portant sur des tables de tailles
+    différentes (`ticket_type_name`, 17 catégories, et `channel`, 7). Seuil
+    retenu au protocole : 0,20, repère rond et conservateur — ce qui porte la
+    décision est l'écart d'un ordre de grandeur entre les résultats comparés,
+    pas la position exacte du seuil.
+
+    Nécessite `scipy` (non requis ailleurs dans le projet — import local pour
+    ne pas alourdir la dépendance pour les notebooks qui ne calculent pas ce
+    test).
+    """
+    from scipy.stats import chi2_contingency
+
+    table = pd.crosstab(groupe, variable)
+    chi2 = chi2_contingency(table)[0]
+    n = table.to_numpy().sum()
+    degres_liberte = min(table.shape) - 1
+    return float(np.sqrt(chi2 / (n * degres_liberte)))
 
 
 def sauver_table(df: pd.DataFrame, nom: str, index: bool = True) -> None:

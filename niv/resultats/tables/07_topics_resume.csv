@@ -1,0 +1,30 @@
+﻿,categorie,sous_motif,effectif,pct_categorie,mots_cles,libelle
+0,ACCUEIL,ACCUEIL#0,77,74.8,"compte, sara, compte sara, arrive, sara money, connecter, reclamation, pourquoi, plus, depuis",Accès à SARA impossible ou argent non arrivé (formulation générique)
+1,ACCUEIL,ACCUEIL#1,25,24.3,"money, account, sara, money account, orange, received, transaction, sara money, orange money, withdrawal","Argent non reçu (anglophone, générique)"
+2,ACCUEIL,ACCUEIL#non_modelise,1,1.0,(texte sans terme retenu par le vectoriseur),Texte insuffisant après filtrage
+3,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#3,79,16.2,"tel, lieu, numero tel, lieu tel, tel lieu, number, numero, sent, montant, wrong","Erreur de numéro (formulation courte, bilingue)"
+4,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#4,73,15.0,"transaction, erreur transaction, erreur, transaction erreur, annulation, fais erreur, fais, transaction fais, transaction sara, annulation transaction","Erreur de transaction, demande d'annulation"
+5,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#0,70,14.3,"money, orange, orange money, compte, sara, compte sara, vers orange, vers, sara money, compte orange","Bénéficiaire erroné, transfert SARA -> Orange Money"
+6,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#7,69,14.1,"transfert, vers, transfert argent, autre, argent, vers autre, operateur, transfert vers, vers numero, numero",Transfert envoyé vers un autre numéro/opérateur par erreur
+7,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#2,66,13.5,"errone, beneficiaire errone, beneficiaire, numero errone, annulation transaction, annulation, errone erreur, transaction, numero, errone fait","Bénéficiaire erroné, demande d'annulation de la transaction"
+8,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#1,59,12.1,"erreur beneficiaire, beneficiaire, erreur, beneficiaire envoye, envoye, numero, erreur erreur, numero beneficiaire, voulais, beneficiaire erreur",Erreur de bénéficiaire lors de l'envoi
+9,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#6,45,9.2,"destinataire, erreur destinataire, erreur, erreur numero, numero telephone, numero, telephone, fait erreur, destinataire erreur, fait",Erreur de numéro du destinataire
+10,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#5,25,5.1,"confondu, chiffre, dernier, dernier chiffre, numero, chiffre numero, confondu numero, confondu dernier, depot, erreur beneficier",Confusion sur le dernier chiffre du numéro bénéficiaire
+11,BENEFICIAIRE ERRONE,BENEFICIAIRE ERRONE#non_modelise,2,0.4,(texte sans terme retenu par le vectoriseur),Texte insuffisant après filtrage
+12,CARTE,CARTE#0,77,51.3,"gab, compte, retrait, reclamation, argent, debite, ete, sans, ete debite, 2026","Retrait GAB débité, argent non obtenu"
+13,CARTE,CARTE#1,56,37.3,"carte, visa, carte visa, prepayee, carte prepayee, ete, bancaire, arrive, faire, recu",Carte Visa/prépayée : demande ou dysfonctionnement
+14,CARTE,CARTE#2,17,11.3,"card, money, account, new, atm, withdrawal, debited, cash, atm machine, received","Retrait GAB débité, argent non obtenu (anglophone)"
+15,COMPTE,COMPTE#5,691,26.3,"000, fcfa, 000 fcfa, solde, retrait, 2026, montant, les, fcfa compte, salaire","Salaire, solde ou retrait contesté (générique)"
+16,COMPTE,COMPTE#3,415,15.8,"sara, compte sara, sara money, money, vers, transaction, vers sara, arrive, vers compte, effectue",Transfert compte bancaire <-> SARA non arrivé
+17,COMPTE,COMPTE#2,324,12.3,"orange, orange money, money, compte orange, vers orange, vers, transaction, recu, argent, transfert",Transfert compte -> Orange Money non reçu
+18,COMPTE,COMPTE#1,323,12.3,"account, bank, bank account, money, money account, deducted, sara account, balance, debited, momo","Compte débité, argent non reçu (anglophone)"
+19,COMPTE,COMPTE#0,298,11.3,"ete, debite, ete debite, compte ete, fois, deux, debite compte, deux fois, sans, retrait","Débit contesté, demande de remboursement"
+20,COMPTE,COMPTE#7,268,10.2,"bancaire, compte bancaire, bancaire vers, bancaire compte, bancaire ete, vers compte, argent compte, debit, argent, vers","Compte bancaire débité, transfert non abouti"
+21,COMPTE,COMPTE#6,215,8.2,"epargne, compte epargne, courant, compte courant, argent, argent compte, epargne compte, courant compte, pourquoi, solde",Compte épargne / courant : retrait ou retranchement contesté
+22,COMPTE,COMPTE#4,92,3.5,"echoue, effectue transaction, 000f, recuperer, souhaite recuperer, echoue compte, transaction, souhaite, debite souhaite, matin",Demande de transfert non exécutée ou erreur de numéro
+23,COMPTE,COMPTE#non_modelise,3,0.1,(texte sans terme retenu par le vectoriseur),Texte insuffisant après filtrage
+24,CREDIT,CREDIT#0,68,85.0,"credit, scolaire, credit scolaire, demande, depuis, demande credit, 2026, compte, rien, terme","Demande de crédit scolaire, sans suite"
+25,CREDIT,CREDIT#1,12,15.0,"loan, school, received, account, long, money, bank, faire, numero, sara","Loan requested, not disbursed (anglophone)"
+26,OPERATIONS_INTERNATIONALES,OPERATIONS_INTERNATIONALES#1,21,50.0,"account, transaction, money, received, transfer, sara, international, bank, payment, sara money","International transfer, funds not received (anglophone)"
+27,OPERATIONS_INTERNATIONALES,OPERATIONS_INTERNATIONALES#0,18,42.9,"compte, transfert, fonds, recu, effectue, depuis, ete, virement, reclamation, international","Transfert international, fonds non reçus"
+28,OPERATIONS_INTERNATIONALES,OPERATIONS_INTERNATIONALES#non_modelise,3,7.1,(texte sans terme retenu par le vectoriseur),Texte insuffisant après filtrage
