@@ -140,6 +140,6 @@ livrables versionnés). Les quatre autres dépendent de ces étapes.
 | B — §7.2 | Cadre réglementaire non renseigné | §7.2, §7.4, §8.3 | Haute — conditionne la diffusion | Faire trancher par le service juridique / conformité |
 | A2 | 7ᵉ famille causale absente du code | §4.2 | Moyenne | Ajouter la règle, ou retirer la ligne |
 | C | Jeu de référence, kappa, précision/rappel, sensibilité à l'ordre | §4.5, §8.3 | Moyenne — conditionne 4 des 6 critères de succès | Planifier dans le calendrier (§9.1) |
-| B — §1.1, §9 | Commanditaire, tuteur, calendrier, rôles | §1.1, §9 | Basse pour l'analyse, haute pour la validation formelle | À renseigner avant soumission |
+| B — §1.1, §9 | ~~Commanditaire~~, tuteur, calendrier, rôles | §1.1, §9 | Basse pour l'analyse, haute pour la validation formelle | Commanditaire renseigné le 14/08/2026 (Cédric Donfack, DRI — retrouvé dans le document de cadrage officiel de l'étude, jusque-là non lu) ; tuteur/calendrier/rôles toujours à compléter |
 
 Ce tableau est la liste de travail à solder avant de soumettre le protocole pour validation.

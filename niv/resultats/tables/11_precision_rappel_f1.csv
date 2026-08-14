@@ -1,0 +1,3 @@
+﻿famille,n_reference_b,vrai_positif,faux_positif,faux_negatif,precision,rappel,f1
+erreur_client,299,178,13,121,0.932,0.595,0.727
+debit_non_credit,629,311,25,318,0.926,0.494,0.645

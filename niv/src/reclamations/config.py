@@ -123,6 +123,86 @@ def chemin_conversations() -> Path | None:
 
 
 # --------------------------------------------------------------------------- #
+# Système B — second outil de gestion de réclamations (non-Intercom)
+# --------------------------------------------------------------------------- #
+
+#: Dossiers où chercher les fichiers du Système B, par ordre de préférence.
+#:
+#: Le dossier réel s'appelle `Nouveau dossier 1/Nouveau dossier` (nom
+#: d'extraction non renommé) : plutôt que de coder ce chemin en dur, la
+#: recherche est **récursive** (`rglob`) sous chacun de ces dossiers, ce qui
+#: survit à un renommage ou un déplacement du sous-dossier. Chaque fichier du
+#: Système B a un nom stable et prévisible (`tickets_first.xlsx`,
+#: `categories.xlsx`...), peu de risque de collision.
+_CANDIDATS_SYSTEME_B = (
+    RACINE / "data" / "raw",
+    RACINE.parent / "dataset",
+    RACINE.parent,
+)
+
+#: Fichiers attendus du Système B, tels que vérifiés lors de l'exploration.
+FICHIERS_SYSTEME_B = (
+    "tickets_first.xlsx",
+    "categories.xlsx",
+    "groups.xlsx",
+    "users.xlsx",
+    "ticket_assigned_users.xlsx",
+    "custom_fields.xlsx",
+    "custom_field_values.xlsx",
+    "ticket_conversations.xlsx",
+)
+
+
+def chemin_systeme_b(nom_fichier: str) -> Path | None:
+    """Localise un fichier du Système B par son nom exact, si présent.
+
+    Recherche récursive sous :data:`_CANDIDATS_SYSTEME_B` (voir sa docstring).
+    Comme :func:`chemin_conversations`, l'absence n'est pas une erreur : à
+    l'appelant de décider — mais `systeme_b.py` traite en pratique ces 8
+    fichiers comme un tout (un système incomplet n'est pas exploitable).
+    """
+    for dossier in _CANDIDATS_SYSTEME_B:
+        if not dossier.is_dir():
+            continue
+        trouves = sorted(dossier.rglob(nom_fichier))
+        if trouves:
+            return trouves[-1]
+    return None
+
+
+#: Fenêtre (jours, ± autour de la date) retenue pour l'appariement A↔B par
+#: (téléphone, montant, date). Justifiée par le taux d'appariement mesuré sur
+#: le seul téléphone : 19,4 % à ±3 j, 23,3 % à ±7 j, 26,0 % à ±14 j — le signal
+#: continue de croître au-delà de 3 j (la ressaisie manuelle est parfois
+#: différée), mais ±3 j est le point où l'écart au bruit de fond
+#: (`consolidation.bruit_de_fond`) est déjà net sans élargir inutilement le
+#: risque de faux appariement. À revérifier, pas à recopier tel quel — le
+#: notebook 09 doit reproduire ce calcul sur les données réelles.
+#: Établi dans : notebooks/09_deduplication_a_b.ipynb
+FENETRE_APPARIEMENT_JOURS = 3
+
+#: Seuil de représentativité pour le test de bruit de fond par permutation
+#: (`consolidation.bruit_de_fond`) : un taux d'appariement observé est jugé
+#: significatif s'il dépasse ce multiple du taux obtenu par permutation
+#: aléatoire des clés. Repère conservateur, pas une loi statistique — c'est
+#: l'écart d'ordre de grandeur qui porte la décision (même logique que le
+#: seuil de V de Cramér, §4.4 du protocole).
+SEUIL_SIGNAL_SUR_BRUIT = 3.0
+
+#: Borne haute de plausibilité sur `montant_xaf` (Système B), en XAF.
+#:
+#: Valeur provisoire, reprise du seuil équivalent côté Système A
+#: (:data:`MONTANT_PLAFOND_PLAUSIBLE`) — **à revérifier dans le notebook 08**
+#: contre la distribution réelle de `montant_xaf` avant d'être considérée
+#: comme retenue : l'exploration préalable signale un maximum à 698 136 765,
+#: très supérieur à celui de A, dont la forme (amas artificiel ou queue
+#: continue) n'a pas encore été caractérisée sur les données chargées par ce
+#: projet.
+#: Établi dans : notebooks/08_systeme_b_chargement_qualite.ipynb
+MONTANT_PLAFOND_PLAUSIBLE_B = 10_000_000
+
+
+# --------------------------------------------------------------------------- #
 # Constantes de périmètre temporel
 # --------------------------------------------------------------------------- #
 
@@ -242,6 +322,16 @@ FRAGMENTS_COLONNES_SENSIBLES = (
     "reference",
     "contacts",
     "rib",
+    # Ajoutés pour le Système B (colonnes en anglais ou vocabulaire différent) :
+    "matricule",
+    "carte",
+    "name",
+    "mail",
+    "creator",
+    "subject",
+    "detail",
+    "solution",
+    "body_text",
 )
 
 #: Noms de colonnes exactement sensibles, en complément des fragments ci-dessus.

@@ -1,0 +1,8 @@
+﻿colonne,pct_rempli,nb_uniques,raison_ecartee
+type_reclamation,0.0,0,vide à 100 %
+is_reclamation_fondee,0.0,0,vide à 100 %
+customer_id,0.0,0,vide à 100 % — aucun identifiant client exploitable dans ce système
+creator_type,100.0,1,constante ('EMPLOYEE')
+domaine_reclamation,72.0,1,"quasi-constante ('RECLAMATION_CLIENT', 72 % de remplissage)"
+detail,4.2,235,"remplie à 4,2 % seulement"
+priority,100.0,4,"à 97,5 % 'MOYENNE' — valeur par défaut jamais modifiée"

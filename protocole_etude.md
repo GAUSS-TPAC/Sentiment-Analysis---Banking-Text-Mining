@@ -1,5 +1,27 @@
 # Protocole d'étude — analyse des réclamations clients Intercom
 
+**Analyse des réclamations clients par text mining** — Afriland First Bank.
+
+| | |
+|---|---|
+| Auteur / Analyste | Alan TCHAPDA — Direction Recherche & Innovation (DRI) |
+| Commanditaire | Cédric Donfack — Direction Recherche & Innovation (DRI) |
+| Confidentialité | Ce document ne saurait être divulgué en partie ou en totalité, verbalement ou par écrit — y compris par photocopie — à une tierce personne sans autorisation écrite d'Afriland First Bank. Il est la propriété d'Afriland First Bank et doit lui être retourné à sa demande. |
+
+**Écart assumé avec la commande initiale.** Le document de cadrage remis par le commanditaire
+(*« Analyse des réclamations clients par Text mining et Sentiments analysis »*, structuré en 4
+phases : conformité et conception d'une procédure, analyse des causes profondes, formulation de
+recommandations opérationnelles, évaluation de la responsabilité vis-à-vis des créanciers) demandait
+un **dashboard Streamlit** alimenté par sentiment analysis et topic modeling. Ce protocole retient
+une méthode différente — classification causale par règles, sans mesure de sentiment, restituée en
+notebooks reproductibles plutôt qu'en dashboard — justifiée en § 4.1. Une première itération
+conforme à la commande initiale existe (`niv1/`, sentiment XLM-RoBERTa + topic modeling NMF +
+dashboard Streamlit) mais n'a pas été retenue comme méthode de référence, pour les raisons du § 4.1.
+La correspondance entre les 4 phases de la commande et le contenu réellement livré est faite en
+§ 1.6.
+
+---
+
 **Version.** Ce document consolide les résultats des notebooks `niv/notebooks/01` à `06` et fixe la
 méthodologie retenue pour la suite de l'étude. Certaines décisions ici présentées comme retenues
 sont validées par un calcul reproduit dans ce document mais **pas encore reflétées dans le code**
@@ -39,8 +61,8 @@ interfaces avec les opérateurs de mobile money (Orange Money, MTN MoMo).
 |---|---|
 | Établissement | Afriland First Bank |
 | Cadre du travail | Mémoire tutoré |
-| Commanditaire / service porteur | **[À COMPLÉTER]** |
-| Maître de stage / tuteur | **[À COMPLÉTER]** |
+| Commanditaire / service porteur | Cédric Donfack — Direction Recherche & Innovation (DRI) |
+| Maître de stage / tuteur | **[À COMPLÉTER]** — à confirmer si distinct du commanditaire ci-dessus |
 
 ### 1.2 Problématique
 
@@ -103,6 +125,20 @@ l'indicateur cible n'est pas le volume de plaintes, mais un taux rapporté à l'
 Ingénieurs data amenés à reprendre ou étendre ce travail, et maître de stage / jury du mémoire
 tutoré. Le document se lit sans connaissance préalable de la mise en œuvre : toute notion utilisée
 est définie à son premier usage.
+
+### 1.6 Correspondance avec les 4 phases de la commande initiale
+
+Le document de cadrage remis par le commanditaire (§ en tête de ce protocole) structure le travail
+en 4 phases. Ce protocole détaille le même travail en 10 sections plus fines (§ 2 à § 10) ; la
+table ci-dessous fait la correspondance, phase par phase, en signalant explicitement où le
+contenu livré diverge de ce que la commande décrivait.
+
+| Phase (commande initiale) | Ce que la commande décrivait | Ce qui est réellement livré | Section |
+|---|---|---|---|
+| Phase 1 — Analyse de conformité et conception d'une nouvelle procédure | Audit de l'existant (constat du champ `Root cause` inexploité), conception d'une procédure de préparation des données | Identique sur l'audit (§ 2, § 3.1-3.2) et la procédure de préparation (nettoyage, masquage, normalisation, § 3.3) | § 2, § 3 |
+| Phase 2 — Analyse des causes profondes | Sentiment analysis (négatif/neutre/positif) + topic modeling par catégorie, pour nourrir un dashboard | **Diverge** : classification causale par règles (auditable ligne à ligne) en lieu et place du sentiment (justifié § 4.1), complétée par du topic modeling sur les catégories hors du périmètre des règles (notebook 07) | § 4 |
+| Phase 3 — Formulation des recommandations opérationnelles | Statistiques et graphes dans un dashboard Streamlit, priorisation des recommandations | **Diverge sur le support** : mêmes statistiques (§ 5), mais restituées en tables et figures versionnées (`resultats/`) au sein de notebooks reproductibles, pas dans un dashboard interactif — voir l'écart assumé en tête de document | § 5, notebook 06 |
+| Phase 4 — Évaluation de la responsabilité vis-à-vis des créanciers | Isoler les motifs à dysfonctionnement confirmé, quantifier volume et montants, depuis le dashboard | Identique sur le fond (§ 4.2 rang 2 et 4, § 5.1) — l'exposition financière en ordre de grandeur **est** la lecture de responsabilité vis-à-vis des clients lésés (créanciers de la banque au sens de dépositaires) ; restituée en table plutôt qu'en vue dashboard | § 4.2, § 5.1 |
 
 ---
 

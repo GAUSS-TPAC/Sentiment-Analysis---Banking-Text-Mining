@@ -1,0 +1,25 @@
+﻿domaine,sous_motif,effectif,pct_domaine
+Sous domaine Monetique,Opérations GAB AFB,705,54.1
+Sous domaine Monetique,Opérations GAB,294,22.6
+Sous domaine Monetique,Autre,92,7.1
+Sous domaine Monetique,Versement GAB,75,5.8
+Sous domaine Monetique,Paiement En Ligne,71,5.4
+Sous domaine Monetique,Opérations GAB Confrère,41,3.1
+Sous domaine Monetique,Opérations TPE,22,1.7
+Sous domaine Monetique,Carte Blanche,2,0.2
+Sous domaine Monetique,Carte Volée,1,0.1
+Sous domaine Operations bancaire,Problème Cash Deposit,129,32.9
+Sous domaine Operations bancaire,Opération Contestée,124,31.6
+Sous domaine Operations bancaire,Autre,108,27.6
+Sous domaine Operations bancaire,Problème de Crédit,17,4.3
+Sous domaine Operations bancaire,Solde Erroné,14,3.6
+Sous domaine Sara transactionnel,Échec Cash-In,1636,36.1
+Sous domaine Sara transactionnel,Échec Wallet-to-Other-Wallet,1227,27.1
+Sous domaine Sara transactionnel,Bénéficiaire erroné,1114,24.6
+Sous domaine Sara transactionnel,Fond non perçu,211,4.7
+Sous domaine Sara transactionnel,Échec Cash-Out,164,3.6
+Sous domaine Sara transactionnel,Échec Wallet-to-Wallet,137,3.0
+Sous domaine Sara transactionnel,Échec MAC Bank-to-Wallet,24,0.5
+Sous domaine Sara transactionnel,Échec Achat Air-Time,5,0.1
+Sous domaine Sara transactionnel,Échec MAC Wallet-to-Bank,4,0.1
+Sous domaine Sara transactionnel,Échec Paiement Facture,4,0.1

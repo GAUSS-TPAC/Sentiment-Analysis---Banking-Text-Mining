@@ -1,0 +1,10 @@
+﻿cle,orphelins
+tickets.category_id -> categories.id,0
+tickets.group_id -> groups.id,0
+tickets.source_group_id -> groups.id,0
+tickets.user_id -> users.id,0
+custom_field_values.ticket_id -> tickets.id,0
+custom_field_values.custom_field_id -> custom_fields.id,0
+ticket_conversations.ticket_id -> tickets.id,0
+ticket_assigned_users.ticket_id -> tickets.id,0
+ticket_assigned_users.user_id -> users.id,0
