@@ -119,14 +119,59 @@ et qui déterminent directement les critères de succès (§8.3) :
 
 | Étape prévue | Statut vérifié |
 |---|---|
-| Jeu de référence annoté, 300 textes stratifiés | N'existe pas dans le dépôt |
+| Jeu de référence annoté, 300 textes stratifiés | N'existe toujours pas — voir cependant le jeu de référence *de fait* ci-dessous (section D) |
 | Double annotation (100 textes) + coefficient kappa | Non réalisée |
-| Précision, rappel, F1 par famille | Non calculables tant que le jeu de référence n'existe pas |
+| Précision, rappel, F1 par famille | **Partiellement fait** le 14/08/2026, notebook 11 : sur 950 tickets appariés au Système B (annotation humaine indépendante), precision 0,93/rappel 0,60/F1 0,73 (`erreur_client`) et precision 0,93/rappel 0,49/F1 0,65 (`debit_non_credit`). Échantillon biaisé (§ D.4), ne remplace pas le jeu stratifié de 300 textes ni le calcul de kappa. |
 | Test de sensibilité à l'ordre des familles causales | Non réalisé |
 
 **Conséquence directe sur §8.3** — sur les 6 critères de succès listés, seuls deux sont marqués
 « atteint » aujourd'hui (représentativité V ≤ 0,20 ; absence de donnée personnelle dans les
 livrables versionnés). Les quatre autres dépendent de ces étapes.
+
+---
+
+## D. Chantier ajouté le 14/08/2026 — intégration du Système B, absent du protocole
+
+Le protocole ne mentionne, à ce stade, qu'une seule source (l'export Intercom, Système A). Un
+second système de gestion de réclamations a été découvert dans `dataset/` (8 fichiers relationnels
+autour de `tickets_first.xlsx`, 8 005 tickets), actif en parallèle du Système A sur toute la
+période opérationnelle. Ce n'est pas un écart au sens des sections précédentes — le protocole n'a
+simplement jamais été mis à jour pour en tenir compte. Détail du chantier et des chiffres :
+`.claude/plans/je-veux-que-l-on-sequential-babbage.md`, notebooks `niv/notebooks/08` à `12`.
+
+**Ce qui a été fait** :
+
+1. **Le Système A et le Système B ne sont pas des populations indépendantes.** 55 à 70 % des
+   3 180 tickets `canal=INTERCOM` du Système B sont des ressaisies manuelles de tickets déjà
+   présents côté A (A précède B de quelques heures en médiane). Un dédoublonnage par appariement
+   fin (téléphone + montant + date proche, ou référence de transaction commune, chacun validé
+   contre un bruit de fond mesuré par permutation) retire 1 182 doublons détectés — notebook 09.
+2. **Périmètre consolidé** : 18 056 (Système A) + 6 823 (Système B dédupliqué) = **24 879
+   réclamations**, contre un cumul brut naïf de 26 099 qui aurait surcompté.
+3. **Le Système B porte une taxonomie de sous-motifs annotée à la main** (23 valeurs, 3 champs
+   dropdown, 80 % des tickets qualifiés) — utilisée au notebook 11 comme jeu de référence *de
+   fait* pour mesurer précision/rappel/F1 des règles causales du notebook 04 (voir section C
+   ci-dessus).
+4. **Deux dimensions inédites** : l'agence d'origine (absente du Système A) et un délai de
+   résolution réel (`created_at → resolved_on`, la mesure `→ closed_on` étant un artefact de
+   clôture automatique à écarter — notebook 08 § 4).
+5. **Convergence de contrôle** : la médiane d'exposition financière `debit_non_credit` calculée
+   indépendamment sur A (règles) et B (annotation humaine) est identique — 50 000 XAF des deux
+   côtés (notebook 12 § 4).
+
+**Ce qui reste ouvert** :
+
+- Le protocole (ce document) ne décrit encore que le Système A — une réécriture intégrant le
+  Système B (nouvelles sections 2/3.5/4.2/5.1) reste à faire, au même titre que la mise à jour déjà
+  signalée en tête de document pour le périmètre à la journée.
+- Le taux de faux négatifs du dédoublonnage (notebook 09 § 6) n'est pas mesuré, seulement borné en
+  ordre de grandeur par le bruit de fond par canal.
+- La correspondance entre les deux taxonomies ne couvre que 2 des 6 familles causales de A
+  (`erreur_client`, `debit_non_credit`) — `acces_otp`, `debit_injustifie`, `carte`, `demande_info`
+  restent sans pont validé vers le Système B (notebook 11 § 3).
+- `type_reclamation` / `is_reclamation_fondee` sont vides à 100 % dans le Système B : la question
+  « réclamation fondée ou non » (proche de la Phase 4 du document de cadrage officiel, § 1.6 du
+  protocole) reste sans réponse malgré le second système.
 
 ---
 
@@ -139,7 +184,8 @@ livrables versionnés). Les quatre autres dépendent de ces étapes.
 | A1 | ~~Deux périmètres finaux coexistent, un seul est implémenté~~ | §3.4, §3.5 | **Corrigé le 13/08/2026, puis dépassé par l'intégration de `conversations_.xlsx`** | Règle journalière implémentée sur texte enrichi ; périmètre réel 9 381/8 348 |
 | B — §7.2 | Cadre réglementaire non renseigné | §7.2, §7.4, §8.3 | Haute — conditionne la diffusion | Faire trancher par le service juridique / conformité |
 | A2 | 7ᵉ famille causale absente du code | §4.2 | Moyenne | Ajouter la règle, ou retirer la ligne |
-| C | Jeu de référence, kappa, précision/rappel, sensibilité à l'ordre | §4.5, §8.3 | Moyenne — conditionne 4 des 6 critères de succès | Planifier dans le calendrier (§9.1) |
+| C | ~~Jeu de référence, kappa, précision/rappel, sensibilité à l'ordre~~ | §4.5, §8.3 | Moyenne — conditionne 4 des 6 critères de succès | **Précision/rappel/F1 partiellement mesurés le 14/08/2026** (notebook 11, section D) sur 2 des 6 familles ; kappa, jeu stratifié de 300 textes et sensibilité à l'ordre toujours à réaliser |
 | B — §1.1, §9 | ~~Commanditaire~~, tuteur, calendrier, rôles | §1.1, §9 | Basse pour l'analyse, haute pour la validation formelle | Commanditaire renseigné le 14/08/2026 (Cédric Donfack, DRI — retrouvé dans le document de cadrage officiel de l'étude, jusque-là non lu) ; tuteur/calendrier/rôles toujours à compléter |
+| D | Système B (8 005 tickets) absent du protocole | tout le document | **Haute** — change le périmètre total (24 879 consolidés) | Réécrire le protocole pour intégrer le Système B (notebooks 08-12, section D) |
 
 Ce tableau est la liste de travail à solder avant de soumettre le protocole pour validation.
