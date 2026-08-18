@@ -175,10 +175,66 @@ simplement jamais été mis à jour pour en tenir compte. Détail du chantier et
 
 ---
 
+## E. Trois cadrages non réconciliés (ajouté le 18/08/2026)
+
+Vérification demandée : le code suit-il **la même feuille de route** que le protocole du
+commanditaire ? Réponse courte : il en existe **trois versions distinctes** dans ce dépôt, deux
+d'entre elles n'ont jamais été comparées entre elles, et le code n'en suit complètement aucune.
+
+| Document | Date | Contenu | Statut |
+|---|---|---|---|
+| `protocole d'etude _ Text mining - Analyse des Reclamations Clients - dashboard auto.odt` | 27/07/2026 (`dc:date` du fichier) | Cadrage d'origine du commanditaire. **Une seule source** (Intercom). Objectif : **dashboard Streamlit**, classification par **sentiment** (négatif/neutre/positif) + topic modeling, pas de mention d'un second système. | Fichier binaire, jamais lu par du code ni transcrit intégralement avant aujourd'hui — seul le nom du commanditaire en avait été extrait le 14/08. |
+| `protocole_etude.md` | rédigé le 14/08/2026 | Protocole **de l'analyste**, écrit en réponse au fichier ci-dessus. Énonce explicitement un **« écart assumé »** : classification causale par règles (pas de sentiment), restitution en notebooks (pas de dashboard) — justifié § 4.1. Une table de correspondance phase par phase (§ 1.6, lignes 139-141) documente cet écart point par point. Périmètre : Système A (Intercom) seul, 6 notebooks (01-06). | Cohérent avec le `.odt` de 27/07 sur la structure (mêmes 4 phases), assume et justifie l'écart de méthode — mais ne connaît pas encore le Système B ni le chronogramme en 10 étapes ci-dessous. |
+| `protocole_etude_officiel.md` | fichier écrit le 17/08/2026 (contenu collé en séance, pas transcrit d'un fichier retrouvé sur le poste) | Texte **collé par l'utilisateur** — identique à celui repartagé le 18/08/2026 pour cette vérification. **Deux sources** (Intercom + second outil), chronogramme en 10 étapes, **aucune mention de sentiment ni de dashboard**. Objectifs spécifiques I-IV chiffrés (≥80 % fiabilité classification, 10 sous-motifs couvrant ≥80 % du volume, 100 % des 10 problèmes avec recommandation + responsable). | **Jamais comparé au `.odt` du 27/07 ni à `protocole_etude.md`.** C'est la version la plus récente et la plus détaillée obtenue du commanditaire — rien n'indique explicitement qu'elle remplace le `.odt`, mais son périmètre (Système B, pas de dashboard) est strictement plus large et incompatible avec un dashboard sentiment mono-source. À faire trancher par le commanditaire : ce texte remplace-t-il le `.odt` de juillet, ou les deux cadrages doivent-ils cohabiter ? |
+
+**Conséquence directe** : `protocole_etude.md`, qui est aujourd'hui le document de référence du code
+(cf. son en-tête, « fixe la méthodologie retenue pour la suite de l'étude »), justifie son écart
+vis-à-vis du **mauvais** cadrage — celui du 27/07, sans Système B. Il ne traite pas, et ne peut pas
+traiter, l'écart réel vis-à-vis du cadrage du 17/08 (Système B, chronogramme en 10 étapes, objectifs
+spécifiques chiffrés), qui est pourtant le plus récent des deux.
+
+### E.1 — Chronogramme du cadrage du 17/08 (`protocole_etude_officiel.md`) vs code exécuté
+
+| Étape | Contenu attendu | Notebook(s) | Statut vérifié |
+|---|---|---|---|
+| 1 | Chargement, qualité, cadrage Intercom | 01, 02, 03 | ✅ fait |
+| 2 | Chargement, qualité, cadrage second outil | 08 | ✅ fait |
+| 3 | Recoupement + règle de déduplication | 09 | ✅ fait — 1 182 doublons retirés (voir section D) |
+| 4 | Consolidation finale dédoublonnée | 12 (partiel) | ⚠️ un périmètre consolidé est calculé (24 879, section D.2) mais aucune table `resultats/` ne porte le jeu de données consolidé lui-même comme livrable unique |
+| 5 | Reconstruction sous-motifs (règles + topic modeling) | 04, 07 | ⚠️ fait côté Système A seul ; rappel des règles plafonné à 57 % (documenté) |
+| 6 | Validation croisée vs annotation manuelle | 11 | ⚠️ partiel — precision/rappel/F1 mesurés sur 2 familles causales sur 6 seulement (section C) |
+| 7 | Stats de criticité + hiérarchisation (Objectif III : 10 sous-motifs, ≥80 % du volume **consolidé**) | 06 (Système A seul), 10, 12 | ❌ pas de table unique de hiérarchisation sur le périmètre consolidé A+B ; `10_exposition_par_sous_motif.csv` existe mais porte uniquement les 23 sous-motifs annotés du Système B, jamais fusionnés à la taxonomie causale du Système A (04) |
+| 8 | Recommandations opérationnelles + responsable (Objectif IV : 100 % des 10 problèmes prioritaires) | — | ❌ aucun livrable trouvé. `04_par_responsable.csv` existe (attribution technique par famille causale — Système banque/opérateur 71 %, UX appli 12 %, authentification 6,7 %, monétique 3,8 %) mais c'est une donnée d'entrée, pas une recommandation opérationnelle rédigée |
+| 9 | Évaluation exposition financière (Phase 4) | 12 §4 (partiel) | ⚠️ `12_exposition_comparee.csv` : convergence A/B à 50 000 XAF sur `debit_non_credit` uniquement (2 familles sur 6) ; `is_reclamation_fondee` vide à 100 % côté Système B (section D) — la question « fondée ou non » reste sans réponse |
+| 10 | Rédaction du mémoire et restitution | — | ❌ aucun mémoire trouvé dans le dépôt |
+
+**Matière première déjà présente mais non assemblée pour les étapes 7-9** : `04_par_responsable.csv`,
+`10_exposition_par_sous_motif.csv`, `12_exposition_comparee.csv`, `12_top_agences.csv`,
+`12_familles_causales_a.csv`, `12_sous_motifs_b.csv` couvrent chacun un fragment (fréquence, montant,
+agence, responsable technique) mais aucune table ne les combine en un classement unique des 10
+sous-motifs prioritaires exigé par l'Objectif III, et aucun document ne relie ce classement à une
+recommandation + un responsable (Objectif IV).
+
+### E.2 — Deux branches méthodologiques mortes, toujours versionnées
+
+`niv1/` (22 fichiers, sentiment XLM-RoBERTa + topic modeling NMF + dashboard Streamlit — la première
+itération, conforme au `.odt` du 27/07) et `niv2- tutoré/` (29 fichiers, statistique descriptive +
+évolution temporelle + analyse de montants) précèdent, dans l'historique Git, le commit *« nouvele
+approche »* (`b8bedcd`, 12/08) qui a fait basculer le projet vers `niv/`. Aucune des deux n'a été
+retirée du dépôt ni marquée comme obsolète dans un README. Elles ne correspondent à aucune étape du
+chronogramme du 17/08 et risquent de brouiller la lecture du dépôt pour un relecteur externe
+(commanditaire ou comité) qui tomberait dessus en premier.
+
+---
+
 ## Récapitulatif — priorité d'action avant mise à jour et validation
 
 | # | Écart | Section | Priorité | Action |
 |---|---|---|---|---|
+| **E** | Trois cadrages non réconciliés (`.odt` 27/07 sentiment+dashboard, `protocole_etude.md` 14/08, `protocole_etude_officiel.md` 17/08 — Système A+B, 10 étapes) ; `protocole_etude.md` justifie son écart vis-à-vis du mauvais cadrage | tout le document | **Critique** — sans trancher lequel fait foi, aucun autre écart de ce tableau ne peut être corrigé de façon définitive | Faire confirmer par le commanditaire (Cédric Donfack) si `protocole_etude_officiel.md` (17/08) remplace le `.odt` (27/07) ; réécrire `protocole_etude.md` en conséquence |
+| **E** | Étapes 7-9 du chronogramme du 17/08 : matière première éparse (`04_par_responsable.csv`, `10_exposition_par_sous_motif.csv`, `12_exposition_comparee.csv`, `12_top_agences.csv`) jamais assemblée en un classement unique des 10 sous-motifs prioritaires (Objectif III) ni en recommandations + responsables (Objectif IV) | E.1 | **Haute** — ce sont deux des quatre objectifs spécifiques chiffrés du cadrage le plus récent | Construire la table de fusion A+B par sous-motif (fréquence, canal, agence, montant), puis rédiger les 10 recommandations + responsables |
+| **E** | Étape 10 (mémoire et restitution) : aucun document trouvé | E.1 | Moyenne à ce stade — dépend des étapes 7-9 | À planifier une fois E.1 soldé |
+| **E** | `niv1/` et `niv2- tutoré/` (branches méthodologiques mortes) toujours versionnées, aucune ne correspond au chronogramme du 17/08 | E.2 | Basse pour l'analyse, moyenne pour la lisibilité du dépôt | Archiver ou marquer clairement obsolète dans un README |
 | **Nouveau** | Protocole (§2-§6) cite les anciens effectifs de périmètre partout, code déjà à 9 381/8 348 | tout le document | **Haute** — le document entier est en décalage avec le code | Réécrire §2.4, §3.4, §3.5, §4.2, §4.4, §4.5, §5.1 avec les nouveaux chiffres (voir README et notebooks) |
 | A3 | ~~Règle d'intégralité de l'extrapolation non appliquée, non marquée comme écart~~ | §5.1 | **Corrigé le 12/08/2026** | `AUDIT` corrigé dans le notebook 04, `assert` de non-régression ajouté |
 | A1 | ~~Deux périmètres finaux coexistent, un seul est implémenté~~ | §3.4, §3.5 | **Corrigé le 13/08/2026, puis dépassé par l'intégration de `conversations_.xlsx`** | Règle journalière implémentée sur texte enrichi ; périmètre réel 9 381/8 348 |
