@@ -3,10 +3,12 @@
 # ============================================================
 
 # Raw & processed data (customer data — Afriland)
-data/raw/
-data/processed/
-!data/raw/.gitkeep
-!data/processed/.gitkeep
+# `**/` couvre le dépôt entier (racine + tout sous-projet niv*, présent ou futur),
+# pas seulement un dossier data/ situé à la racine.
+**/data/raw/
+**/data/processed/
+!**/data/raw/.gitkeep
+!**/data/processed/.gitkeep
 
 # Loose CSV/Excel files at any level
 *.csv
@@ -124,3 +126,6 @@ desktop.ini
 # ============================================================
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+# Checkpoint de reprise de session : peut référencer l'état de travail en cours,
+# à garder local (auparavant seulement exclu via .git/info/exclude, non partagé).
+.claude/RESUME.md

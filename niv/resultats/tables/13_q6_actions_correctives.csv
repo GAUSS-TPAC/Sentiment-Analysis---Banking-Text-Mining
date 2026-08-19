@@ -1,0 +1,8 @@
+﻿famille,libelle,responsable,effectif,pct,action_corrective
+non_classe,Non classé par les règles,Indéterminé,4759,46.0,Non actionnable tel quel -- nécessite la classification apprise (Q8) pour être requalifié
+debit_non_credit,Débité sans que le bénéficiaire soit crédité,Système (banque <-> opérateur),3830,37.0,"Diagnostic technique de la chaîne SARA <-> opérateur mobile money (nécessite le journal de transactions, hors périmètre actuel)"
+erreur_client,Erreur de saisie du client (mauvais bénéficiaire),UX de l'application,643,6.2,Afficher le nom du titulaire du compte bénéficiaire avant validation du transfert (UX applicative)
+acces_otp,Accès bloqué / OTP / authentification,Système (authentification),496,4.8,"Fiabiliser l'envoi/la validation de l'OTP, améliorer le message d'erreur de connexion"
+debit_injustifie,"Débit injustifié, doublé, ou frais contestés",Système (banque),312,3.0,Revue des règles de frais/agios affichées au client avant tout prélèvement
+carte,Carte bancaire / distributeur,Système (monétique),230,2.2,Audit du parc GAB/DAB et suivi des incidents monétique par distributeur
+demande_info,Demande d'information (pas une réclamation),Hors périmètre réclamation,84,0.8,Rediriger vers une FAQ / self-service -- hors périmètre réclamation

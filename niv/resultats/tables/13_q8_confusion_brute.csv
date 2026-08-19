@@ -1,0 +1,8 @@
+﻿famille_a,Autre,Bénéficiaire erroné,Fond non perçu,Opération Contestée,Opérations GAB,Opérations GAB AFB,Versement GAB,Échec Achat Air-Time,Échec Cash-In,Échec Cash-Out,Échec MAC Bank-to-Wallet,Échec Wallet-to-Other-Wallet,Échec Wallet-to-Wallet
+acces_otp,0,1,0,0,0,0,0,0,26,0,0,1,0
+carte,0,0,0,0,0,3,0,0,1,0,0,0,0
+debit_injustifie,0,1,0,1,0,1,0,0,21,2,0,0,0
+debit_non_credit,2,12,15,2,4,4,1,3,127,10,1,137,18
+demande_info,0,0,0,0,0,0,0,0,0,0,0,3,0
+erreur_client,0,178,3,0,0,0,0,0,5,0,0,5,0
+non_classe,2,107,4,0,2,0,0,0,152,9,2,75,9
