@@ -1,8 +1,0 @@
-﻿famille,libelle,responsable,effectif,pct
-non_classe,Non classé par les règles,Indéterminé,4759,46.0
-debit_non_credit,Débité sans que le bénéficiaire soit crédité,Système (banque <-> opérateur),3830,37.0
-erreur_client,Erreur de saisie du client (mauvais bénéficiaire),UX de l'application,643,6.2
-acces_otp,Accès bloqué / OTP / authentification,Système (authentification),496,4.8
-debit_injustifie,"Débit injustifié, doublé, ou frais contestés",Système (banque),312,3.0
-carte,Carte bancaire / distributeur,Système (monétique),230,2.2
-demande_info,Demande d'information (pas une réclamation),Hors périmètre réclamation,84,0.8

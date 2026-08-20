@@ -48,6 +48,22 @@ SERIES = [
     "#e34948",  # 8 rouge
 ]
 
+#: Extension à dix teintes, réservée aux figures où **chaque point porte déjà son
+#: étiquette écrite** (nuage catégorie par catégorie, Q4 du notebook 13). Les huit
+#: premières sont :data:`SERIES` inchangées ; les deux dernières ont été ajoutées
+#: parce qu'elles conservent la validation en ordre adjacent (bande de clarté,
+#: chroma, séparation en vision déficiente).
+#:
+#: Au-delà de huit teintes, la couleur ne suffit plus à identifier une série en
+#: vision déficiente : elle ne fait que séparer visuellement des points voisins,
+#: l'identité étant portée par l'étiquette. Pour une légende où le lecteur doit
+#: apparier une couleur à un nom, rester sur :data:`SERIES` et regrouper le
+#: reliquat en « Autres ».
+SERIES_ETENDUE = SERIES + [
+    "#00a0c6",  # 9  cyan
+    "#7fb800",  # 10 lime
+]
+
 #: Encre et chrome. Le gris de grille est volontairement très clair : la grille
 #: sert de repère, pas d'élément graphique.
 ENCRE = {

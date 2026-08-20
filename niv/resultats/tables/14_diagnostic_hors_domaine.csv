@@ -1,0 +1,7 @@
+﻿famille,Bénéficiaire erroné,Fond non perçu,Échec Cash-In,Échec Cash-Out,Échec Wallet-to-Other-Wallet,Échec Wallet-to-Wallet
+Accès bloqué / OTP / authentification,3.6,0.0,96.4,0.0,0.0,0.0
+Carte bancaire / distributeur,0.0,0.0,100.0,0.0,0.0,0.0
+"Débit injustifié, doublé, ou frais contestés",3.8,0.0,84.6,11.5,0.0,0.0
+Débité sans que le bénéficiaire soit crédité,1.5,5.7,33.9,3.0,48.8,7.1
+Demande d'information (pas une réclamation),33.3,0.0,33.3,0.0,33.3,0.0
+Erreur de saisie du client (mauvais bénéficiaire),95.8,1.6,2.6,0.0,0.0,0.0
