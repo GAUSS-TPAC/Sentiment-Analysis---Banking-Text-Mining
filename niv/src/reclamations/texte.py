@@ -8,12 +8,35 @@ une cause. Seul le texte écrit par le client dit ce qui s'est réellement pass�
 
 Limite assumée de l'approche par mots-clés
 ------------------------------------------
-La classification implémentée ici est **à base de règles**, et son rappel plafonne
-aux alentours de 57 % sur la base d'analyse (notebook 04). Ce n'est pas un défaut de réglage :
-les clients décrivent le même incident de vingt façons, en français et en anglais
-(« n'a pas abouti », « non dénoué », « non comptabilisé », « inachevé »,
-« it indicated that it went through but... »). Chaque motif ajouté récupère
-quelques dizaines de tickets et le rendement décroît vite.
+La classification implémentée ici est **à base de règles**, et une part du corpus
+lui échappe par construction : les clients décrivent le même incident de vingt
+façons, en français et en anglais (« n'a pas abouti », « non dénoué », « non
+comptabilisé », « inachevé », « it indicated that it went through but... »).
+
+Cette part a été réduite en fouillant le vocabulaire réel du reliquat plutôt
+qu'en devinant des formulations : n-grammes sur-représentés chez les non-classés
+par rapport aux classés, retenus quand ils couvraient assez de tickets, puis
+**vérifiés par lecture d'échantillons** avant d'être codés. Le non-classé passe
+ainsi de **46,0 % à 36,0 %** de la base opérationnelle (1 032 tickets), sans
+qu'aucune famille ne change de définition — ce sont les mêmes causes, dites
+autrement. La grille cherchait `pas arrive` mais pas `jamais arrive`, et
+connaissait `login` / `connexion` / `can't access` sans connaître le mot
+français **`acceder`** : ces deux oublis expliquaient l'essentiel de l'écart.
+
+Quatre itérations, à rendement franchement décroissant (636, 190, 130, puis
+79 tickets) :
+
+1. n-grammes sur-représentés, familles `debit_non_credit` et `acces_otp` ;
+2. deuxième passe sur le reliquat restant (`erreur_client`, doubles débits) ;
+3. et 4. formulations relevées **en lisant l'échantillon d'audit** lui-même
+   (« déficit », « à deux reprises », « compte erroné », « échec d'opération »).
+
+La méthode marche, mais elle a un plancher, et l'audit le montre directement :
+sur les 20 textes tirés du reliquat (:func:`echantillon_non_classes`), **5 ne
+portent aucune cause exprimée** (« bonjour », « bsr », « compte courant ») —
+aucune règle ni aucun modèle ne les classera jamais. Extrapolé, ce quart du
+reliquat est un plancher structurel, pas un défaut de réglage. C'est lui que
+mesure la ligne :data:`NON_CLASSE`.
 
 Ce plafond est donc **un résultat de l'analyse, pas un préalable technique** : il
 constitue l'argument chiffré en faveur d'une classification apprise (NLP) plutôt
@@ -190,8 +213,12 @@ FAMILLES: tuple[tuple[str, str, str, str], ...] = (
         "Erreur de saisie du client (mauvais bénéficiaire)",
         r"(erreur de (numero|beneficiaire|destinataire|saisie)"
         r"|mauvais (numero|beneficiaire|destinataire)"
-        r"|numero (erron|inactif)|beneficiaire erron"
-        r"|au lieu d[ue]|je me suis tromp|par erreur"
+        r"|numero (erron|inactif)|beneficiaire ?(erron|eronn?e?|erone)"
+        r"|wrongly (made|sent|transfer)|(compte|destinataire) ?erron"
+        r"|erreur de benefici|au lieu j|confondu"
+        r"|au lieu d[ue]|je me suis tromp|je suis tromp|par erreur"
+        r"|erreur de (transaction|transfert|operation)"
+        r"|(envoye|transfere) .{0,30}(numero|compte) inconnu"
         r"|wrong (number|recipient)|mistakenly)",
         "UX de l'application",
     ),
@@ -206,7 +233,16 @@ FAMILLES: tuple[tuple[str, str, str, str], ...] = (
         r"|argent (n.?est pas|pas) arriv|pas arrive"
         r"|sorti\w* de mon compte|transaction echou|echec (de|du) (transfert|transaction)"
         r"|toujours pas|n.?a rien recu"
-        r"|(has|have)n.?t received|not received|didn.?t (receive|go through))",
+        r"|jamais (ete )?(arriv|recu|credit|percu|parvenu)"
+        r"|pas encore (ete )?(arriv|recu|credit|parvenu|depos)"
+        r"|non (pris en compte|execut|depos)"
+        r"|(argent|montant|somme|fonds?) .{0,25}(disparu|volatilis|evapor|manqu)"
+        r"|disparu de mon compte"
+        r"|(has|have)n.?t received|not received|didn.?t (receive|go through)"
+        r"|(was|been|is) debited|debited (but|and|without)"
+        r"|not (credited|gone through)|no credit"
+        r"|has not been (deposited|credited|received)|\bmissing\b"
+        r"|echec d.?(operation|transaction)|operation echou|statut initiated)",
         "Système (banque <-> opérateur)",
     ),
     (
@@ -214,7 +250,13 @@ FAMILLES: tuple[tuple[str, str, str, str], ...] = (
         "Accès bloqué / OTP / authentification",
         r"(\botp\b|code (de )?(verification|confirmation)"
         r"|connexion|connecter|login|log in|mot de passe|password"
-        r"|compte (bloqu|desactiv)|reinitialis|can.?t (log|open|access))",
+        r"|compte (bloqu|desactiv|verrouill)|verrouill"
+        r"|reinitialis|can.?t (log|open|access)|deactivat"
+        r"|(pas|impossible d.|arrive pas a|parviens pas a) ?acced"
+        r"|acces (a|refuse|impossible)|acceder (a )?mon"
+        r"|(pas|impossible d.|arrive pas a) ?ouvrir|(appli\w*|compte) ne s.ouvre"
+        r"|(arrive|parviens) pas a consulter|plus consulter"
+        r"|dispositif de confiance)",
         "Système (authentification)",
     ),
     (
@@ -222,7 +264,19 @@ FAMILLES: tuple[tuple[str, str, str, str], ...] = (
         "Débit injustifié, doublé, ou frais contestés",
         r"(sans (aucune )?raison|debit (abusif|inexplique|double)"
         r"|extourne|agios|frais|prelev|retranch"
-        r"|solde (incorrect|errone)|deducted|without any reason)",
+        r"|solde (incorrect|errone)|deducted|without any reason"
+        r"|solde .{0,30}(pas le bon|ne correspond|errone|incorrect|inexact|inferieur)"
+        r"|balance .{0,20}(not correct|is wrong)|negative balance"
+        r"|(debit|preleve|retir|deduct)\w* .{0,20}deux fois|double deduction"
+        r"|(montants?|solde) negatif|retire de mon compte sans"
+        r"|solde .{0,25}negatif|compte .{0,15}negatif"
+        r"|\bdeficit\b|(money|argent|somme) .{0,15}(was )?(lost|perdu)|il (me )?manque"
+        r"|debit\w* (injuste|non justifi|illegal)|injustement (debit|preleve)"
+        r"|(debit|preleve|retir|deduct|credit|transaction|recharge|versement)\w*"
+        r".{0,40}(deux|2) (fois|reprises)"
+        r"|(deux|2) (fois|reprises).{0,40}(debit|preleve|retir|deduct|credit)"
+        r"|a tor[dt]|transaction double|sans explication"
+        r"|dont je n.?ai pas sollicit)",
         "Système (banque)",
     ),
     (
@@ -235,7 +289,9 @@ FAMILLES: tuple[tuple[str, str, str, str], ...] = (
         "demande_info",
         "Demande d'information (pas une réclamation)",
         r"(comment (faire|puis|je)|je (voudrais|souhaite) (savoir|connaitre)"
-        r"|renseignement|c.?est quoi|how (do|can) i)",
+        r"|renseignement|c.?est quoi|how (do|can) i"
+        r"|(voir|obtenir|avoir) (mon )?releve|demande de releve"
+        r"|releve (du|de) compte|releve bancaire)",
         "Hors périmètre réclamation",
     ),
 )
@@ -282,7 +338,8 @@ def couverture(familles: pd.Series) -> pd.DataFrame:
 
     La ligne :data:`NON_CLASSE` est **volontairement conservée** dans la table.
     La masquer donnerait une répartition apparemment complète alors qu'elle ne
-    porte que sur 43 % des textes : c'est précisément l'erreur de lecture que ce
+    porte que sur une partie des textes (62 % après l'enrichissement de la
+    grille, contre 54 % avant) : c'est précisément l'erreur de lecture que ce
     module cherche à empêcher.
     """
     n = len(familles)
@@ -306,6 +363,13 @@ def estimation_corrigee(couverture_par_famille: pd.DataFrame) -> pd.DataFrame:
     auparavant la même correction séparément, avec un risque de désaccord
     silencieux entre les deux.
 
+    **Les textes sans cause exprimée ne sont pas redistribués.**
+    `config.AUDIT_MANUEL_SANS_CAUSE` compte les textes de l'audit qui ne disent
+    rien de leur cause (« bonjour », « compte courant ») : les répartir entre
+    les familles reviendrait à leur inventer une cause. Ils sortent donc du
+    dénominateur, et la part du reliquat qu'ils représentent reste explicitement
+    non attribuée — c'est la ligne `pct_reliquat` manquante, assumée.
+
     Parameters
     ----------
     couverture_par_famille :
@@ -316,14 +380,20 @@ def estimation_corrigee(couverture_par_famille: pd.DataFrame) -> pd.DataFrame:
     -------
     DataFrame
         Une ligne par famille de `config.AUDIT_MANUEL`, plus une ligne pour
-        `config.AUDIT_MANUEL_HORS_TAXONOMIE` : `pct_regles`, `pct_reliquat`,
-        `pct_corrige`.
+        `config.AUDIT_MANUEL_HORS_TAXONOMIE`, plus une ligne finale
+        « sans cause exprimée » qui porte la part non attribuée :
+        `pct_regles`, `pct_reliquat`, `pct_corrige`.
     """
     part_non_classe = couverture_par_famille.loc[NON_CLASSE, "pct"]
+    # Dénominateur = seuls les textes de l'audit qui portent une cause. Diviser
+    # par la taille totale du tirage diluerait les proportions observées avec
+    # des textes dont on sait qu'ils n'ont rien à dire.
+    n_avec_cause = config.AUDIT_MANUEL_TAILLE - config.AUDIT_MANUEL_SANS_CAUSE
+    part_attribuable = part_non_classe * (n_avec_cause / config.AUDIT_MANUEL_TAILLE)
     lignes = []
     for code, n in config.AUDIT_MANUEL.items():
         regle = couverture_par_famille.loc[code, "pct"]
-        part_reliquat = part_non_classe * (n / config.AUDIT_MANUEL_TAILLE)
+        part_reliquat = part_attribuable * (n / n_avec_cause)
         lignes.append(
             {
                 "famille": libelles()[code],
@@ -333,7 +403,7 @@ def estimation_corrigee(couverture_par_famille: pd.DataFrame) -> pd.DataFrame:
             }
         )
     for libelle, n in config.AUDIT_MANUEL_HORS_TAXONOMIE.items():
-        part_reliquat = part_non_classe * (n / config.AUDIT_MANUEL_TAILLE)
+        part_reliquat = part_attribuable * (n / n_avec_cause)
         lignes.append(
             {
                 "famille": libelle,
@@ -342,6 +412,16 @@ def estimation_corrigee(couverture_par_famille: pd.DataFrame) -> pd.DataFrame:
                 "pct_corrige": round(part_reliquat, 1),
             }
         )
+    # Ligne explicite plutôt qu'un reliquat silencieux : le lecteur doit voir
+    # que la correction ne couvre pas tout le non-classé, et de combien.
+    lignes.append(
+        {
+            "famille": "Sans cause exprimée (non attribuable)",
+            "pct_regles": 0.0,
+            "pct_reliquat": round(part_non_classe - part_attribuable, 1),
+            "pct_corrige": round(part_non_classe - part_attribuable, 1),
+        }
+    )
     return pd.DataFrame(lignes).set_index("famille")
 
 

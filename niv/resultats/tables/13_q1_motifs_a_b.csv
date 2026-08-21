@@ -1,13 +1,13 @@
 ﻿systeme,domaine,motif,effectif,pct_de_son_systeme
-A -- famille causale (règles),,Non classé par les règles,4759,46.0
-A -- famille causale (règles),,Débité sans que le bénéficiaire soit crédité,3830,37.0
-A -- famille causale (règles),,Erreur de saisie du client (mauvais bénéficiaire),643,6.2
-A -- famille causale (règles),,Accès bloqué / OTP / authentification,496,4.8
-A -- famille causale (règles),,"Débit injustifié, doublé, ou frais contestés",312,3.0
-A -- famille causale (règles),,Carte bancaire / distributeur,230,2.2
-A -- famille causale (règles),,Demande d'information (pas une réclamation),84,0.8
-B -- sous-motif annoté,Sous domaine Sara transactionnel,Échec Cash-In,1401,25.7
-B -- sous-motif annoté,Sous domaine Sara transactionnel,Échec Wallet-to-Other-Wallet,1051,19.3
+A -- famille causale (règles),,Débité sans que le bénéficiaire soit crédité,4294,41.5
+A -- famille causale (règles),,Non classé par les règles,3724,36.0
+A -- famille causale (règles),,Erreur de saisie du client (mauvais bénéficiaire),783,7.6
+A -- famille causale (règles),,Accès bloqué / OTP / authentification,701,6.8
+A -- famille causale (règles),,"Débit injustifié, doublé, ou frais contestés",556,5.4
+A -- famille causale (règles),,Carte bancaire / distributeur,206,2.0
+A -- famille causale (règles),,Demande d'information (pas une réclamation),83,0.8
+B -- sous-motif annoté,Sous domaine Sara transactionnel,Échec Cash-In,1403,25.7
+B -- sous-motif annoté,Sous domaine Sara transactionnel,Échec Wallet-to-Other-Wallet,1053,19.3
 B -- sous-motif annoté,Sous domaine Sara transactionnel,Bénéficiaire erroné,849,15.6
 B -- sous-motif annoté,Sous domaine Monetique,Opérations GAB AFB,695,12.7
 B -- sous-motif annoté,Sous domaine Monetique,Opérations GAB,288,5.3

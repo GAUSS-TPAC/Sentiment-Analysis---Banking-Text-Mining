@@ -157,6 +157,18 @@ def _extraire_contact_id(valeur) -> str | None:
 # --------------------------------------------------------------------------- #
 
 
+def regrouper_canal_digital(channel: pd.Series) -> pd.Series:
+    """Regroupe les sous-canaux digitaux Intercom (`config.REGROUPEMENT_CANAL_DIGITAL`).
+
+    Android et iOS sont deux OS de la même application SARA, pas deux canaux
+    au sens métier : les fondre change la lecture de Q3 (« quel canal génère
+    le plus de réclamations ? ») sans changer aucun ticket sous-jacent. Une
+    valeur absente du dictionnaire (nouveau sous-canal dans un futur export)
+    est conservée telle quelle plutôt que d'être silencieusement classée `Autre`.
+    """
+    return channel.map(config.REGROUPEMENT_CANAL_DIGITAL).fillna(channel)
+
+
 def perimetre_operationnel(df: pd.DataFrame) -> pd.DataFrame:
     """Restreint à la période opérationnelle (à partir de novembre 2025).
 

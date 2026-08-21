@@ -106,6 +106,27 @@ MOTIF_CONVERSATIONS = "conversations_*.xlsx"
 #: compte d'un client — leur premier message n'est pas la plainte du client.
 AUTEURS_CLIENT = ("user", "lead")
 
+#: Regroupement des sous-canaux digitaux Intercom (`channel`) en quatre canaux
+#: lisibles pour un lecteur métier : `android` et `ios` sont les deux vitrines
+#: de la **même** application mobile SARA (le client ne « choisit » pas un
+#: canal différent selon son OS), donc regroupés sous `SARA` plutôt que
+#: comptés comme deux canaux distincts. `whatsapp` et `facebook` restent
+#: chacun leur propre ligne (volume propre, 12,7 % et 1,0 % de A) ; seuls
+#: `messenger` et `instagram` sont marginaux (ensemble < 0,1 % de A) et
+#: regroupés sous `Autre` pour ne pas noyer la lecture dans des lignes à
+#: quelques unités. Toute valeur absente de ce dictionnaire — inattendue dans
+#: un futur export — est laissée telle quelle par
+#: :func:`chargement.regrouper_canal_digital`, jamais silencieusement
+#: absorbée dans `Autre`.
+REGROUPEMENT_CANAL_DIGITAL = {
+    "android": "SARA",
+    "ios": "SARA",
+    "whatsapp": "WhatsApp",
+    "facebook": "Facebook",
+    "messenger": "Autre",
+    "instagram": "Autre",
+}
+
 
 def chemin_conversations() -> Path | None:
     """Localise l'export conversations Intercom le plus récent, si présent.
@@ -123,16 +144,16 @@ def chemin_conversations() -> Path | None:
 
 
 # --------------------------------------------------------------------------- #
-# Système B — second outil de gestion de réclamations (non-Intercom)
+# First Copilot — l'outil de gestion de réclamations (non-Intercom)
 # --------------------------------------------------------------------------- #
 
-#: Dossiers où chercher les fichiers du Système B, par ordre de préférence.
+#: Dossiers où chercher les fichiers de First Copilot, par ordre de préférence.
 #:
 #: Le dossier réel s'appelle `Nouveau dossier 1/Nouveau dossier` (nom
 #: d'extraction non renommé) : plutôt que de coder ce chemin en dur, la
 #: recherche est **récursive** (`rglob`) sous chacun de ces dossiers, ce qui
-#: survit à un renommage ou un déplacement du sous-dossier. Chaque fichier du
-#: Système B a un nom stable et prévisible (`tickets_first.xlsx`,
+#: survit à un renommage ou un déplacement du sous-dossier. Chaque fichier de
+#: First Copilot a un nom stable et prévisible (`tickets_first.xlsx`,
 #: `categories.xlsx`...), peu de risque de collision.
 _CANDIDATS_SYSTEME_B = (
     RACINE / "data" / "raw",
@@ -140,7 +161,7 @@ _CANDIDATS_SYSTEME_B = (
     RACINE.parent,
 )
 
-#: Fichiers attendus du Système B, tels que vérifiés lors de l'exploration.
+#: Fichiers attendus de First Copilot, tels que vérifiés lors de l'exploration.
 FICHIERS_SYSTEME_B = (
     "tickets_first.xlsx",
     "categories.xlsx",
@@ -154,7 +175,7 @@ FICHIERS_SYSTEME_B = (
 
 
 def chemin_systeme_b(nom_fichier: str) -> Path | None:
-    """Localise un fichier du Système B par son nom exact, si présent.
+    """Localise un fichier de First Copilot par son nom exact, si présent.
 
     Recherche récursive sous :data:`_CANDIDATS_SYSTEME_B` (voir sa docstring).
     Comme :func:`chemin_conversations`, l'absence n'est pas une erreur : à
@@ -189,7 +210,7 @@ FENETRE_APPARIEMENT_JOURS = 3
 #: seuil de V de Cramér, §4.4 du protocole).
 SEUIL_SIGNAL_SUR_BRUIT = 3.0
 
-#: Borne haute de plausibilité sur `montant_xaf` (Système B), en XAF.
+#: Borne haute de plausibilité sur `montant_xaf` (First Copilot), en XAF.
 #:
 #: Valeur provisoire, reprise du seuil équivalent côté Système A
 #: (:data:`MONTANT_PLAFOND_PLAUSIBLE`) — **à revérifier dans le notebook 08**
@@ -281,24 +302,36 @@ FENETRE_REDEPOT_JOURS = 7
 # --------------------------------------------------------------------------- #
 
 #: Décompte de l'audit manuel du reliquat non classé — 20 textes, graine 3,
-#: périmètre à 8 348 textes (notebooks 03+04, texte enrichi + balises HTML
-#: retirées). Centralisé ici, plutôt que dupliqué dans chaque notebook qui
-#: l'utilise (04, 06), pour qu'une ré-lecture de l'audit (nouvel export,
-#: nouvelle graine) ne se corrige qu'à un seul endroit — écart déjà rencontré
-#: une fois (protocole, écart A3). Toutes les familles observées dans l'audit
-#: sont représentées (règle d'intégralité, protocole §5.1) ;
-#: `AUDIT_MANUEL_HORS_TAXONOMIE` couvre celles qu'aucune règle de
-#: `texte.FAMILLES` ne code encore (§4.2, écart A2). `erreur_client` et
-#: `carte` n'apparaissent pas dans ce tirage de 20 textes (absentes, pas à
-#: zéro par choix) : rien à en redistribuer cette fois.
+#: relu **après l'enrichissement de la grille** (`texte.FAMILLES`, 4 itérations).
+#: L'audit précédent, mené sur l'ancien reliquat, est caduc : il y trouvait 12
+#: textes sur 20 relevant de `debit_non_credit`, or ce sont précisément les
+#: « jamais arrivé » que les nouvelles règles captent désormais. Le reliquat
+#: restant a donc changé de composition, pas seulement de taille — un audit ne
+#: survit pas à une modification de la grille qu'il sert à corriger.
+#:
+#: Ce que la relecture montre, et qui compte plus que les proportions :
+#: **5 textes sur 20 ne portent aucune cause exprimée** (« bonjour », « bsr »,
+#: « compte courant », « transfert d'argent transaction sara vers opérateur »).
+#: Aucune règle ni aucun modèle ne les classera : c'est le plancher structurel
+#: du non-classé, et il est ici mesuré plutôt que supposé. Ils sont comptés
+#: sous `AUDIT_MANUEL_SANS_CAUSE`, hors de la redistribution.
+#:
+#: Toutes les familles observées sont représentées (règle d'intégralité,
+#: protocole §5.1). Aucun texte hors taxonomie dans ce tirage — contrairement
+#: à l'audit précédent, d'où un `AUDIT_MANUEL_HORS_TAXONOMIE` désormais vide.
 AUDIT_MANUEL_TAILLE = 20
 AUDIT_MANUEL = {
-    "debit_non_credit": 12,
-    "debit_injustifie": 2,
+    "debit_injustifie": 6,
+    "debit_non_credit": 5,
+    "erreur_client": 3,
     "acces_otp": 1,
-    "demande_info": 1,
 }
-AUDIT_MANUEL_HORS_TAXONOMIE = {"dysfonctionnement_application / hors taxonomie (§4.2)": 4}
+AUDIT_MANUEL_HORS_TAXONOMIE: dict[str, int] = {}
+
+#: Textes du tirage d'audit qu'aucune méthode ne peut classer, faute de cause
+#: exprimée. Exclus de la redistribution de `estimation_corrigee` : les
+#: répartir reviendrait à inventer une cause là où le client n'en donne aucune.
+AUDIT_MANUEL_SANS_CAUSE = 5
 
 # --------------------------------------------------------------------------- #
 # Confidentialité
@@ -322,7 +355,7 @@ FRAGMENTS_COLONNES_SENSIBLES = (
     "reference",
     "contacts",
     "rib",
-    # Ajoutés pour le Système B (colonnes en anglais ou vocabulaire différent) :
+    # Ajoutés pour First Copilot (colonnes en anglais ou vocabulaire différent) :
     "matricule",
     "carte",
     "name",

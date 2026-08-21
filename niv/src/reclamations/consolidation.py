@@ -1,10 +1,10 @@
 """
-Rapprochement du Système A (Intercom) et du Système B (`systeme_b.py`).
+Rapprochement du Système A (Intercom) et de First Copilot (`systeme_b.py`).
 
 Ce module ne contient aucune logique de chargement propre à l'un ou l'autre
 système — seulement ce qui sert à les comparer. Établi après une exploration
 préalable qui a montré que les deux systèmes **ne sont pas indépendants** :
-une partie des tickets `canal = INTERCOM` du Système B sont des ressaisies
+une partie des tickets `canal = INTERCOM` de First Copilot sont des ressaisies
 manuelles de tickets déjà présents dans le Système A, quelques heures après
 leur création côté A (voir notebook 09).
 
@@ -147,7 +147,7 @@ def cles_a(tickets_a: pd.DataFrame) -> pd.DataFrame:
 
 
 def cles_b(tickets_b: pd.DataFrame, champs: pd.DataFrame, valeurs: pd.DataFrame) -> pd.DataFrame:
-    """Table de clés d'appariement pour le Système B, même format que :func:`cles_a`.
+    """Table de clés d'appariement pour First Copilot, même format que :func:`cles_a`.
 
     Le téléphone et la référence viennent de `custom_field_values`
     (`systeme_b.telephone_client` / `systeme_b.reference_transaction`), le

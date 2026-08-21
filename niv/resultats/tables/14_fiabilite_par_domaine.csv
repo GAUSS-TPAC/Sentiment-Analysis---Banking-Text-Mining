@@ -1,5 +1,5 @@
 ﻿seuil,dans_domaine_retenus,dans_domaine_coherence_pct,hors_domaine_etiquetes,hors_domaine_faux_positifs_pct
-45%,370,98.6,48,78.7
-55%,260,98.1,25,41.0
-65%,145,97.9,5,8.2
-75%,66,100.0,0,0.0
+45%,423,98.6,63,78.8
+55%,288,97.9,35,43.8
+65%,158,98.1,10,12.5
+75%,71,100.0,0,0.0

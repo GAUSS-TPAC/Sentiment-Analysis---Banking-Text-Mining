@@ -1,7 +1,7 @@
 """
-Chargement et qualité du Système B — second outil de gestion de réclamations,
+Chargement et qualité de First Copilot — l'outil de gestion de réclamations,
 distinct d'Intercom. Le rapprochement des deux systèmes vit dans
-`consolidation.py`, pas ici : ce module ne connaît que le Système B.
+`consolidation.py`, pas ici : ce module ne connaît que First Copilot.
 
 Structure relationnelle (vérifiée par exploration préalable, intégrité
 référentielle à 100 % sur les 7 clés testées, aucune ligne orpheline) ::
@@ -53,12 +53,12 @@ from . import config
 
 
 def _charger(nom_fichier: str) -> pd.DataFrame:
-    """Charge un fichier du Système B par son nom, ou lève une erreur claire."""
+    """Charge un fichier de First Copilot par son nom, ou lève une erreur claire."""
     chemin = config.chemin_systeme_b(nom_fichier)
     if chemin is None:
         raise FileNotFoundError(
             f"'{nom_fichier}' introuvable sous {config._CANDIDATS_SYSTEME_B}. "
-            "Le Système B est traité comme un tout : les 8 fichiers doivent être présents."
+            "First Copilot est traité comme un tout : les 8 fichiers doivent être présents."
         )
     return pd.read_excel(chemin)
 
